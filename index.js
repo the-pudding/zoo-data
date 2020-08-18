@@ -25,6 +25,8 @@ const client = knox.createClient({
 	bucket: AWS_BUCKET
 })
 
+console.log(client)
+
 let page = null
 
 const extension = '.png'
