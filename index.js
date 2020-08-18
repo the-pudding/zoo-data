@@ -164,15 +164,16 @@ async function screenshot(cam) {
 					return('') })
         
 				// write screenshot to AWS
-				client.putFile(ss, {
+				const req = client.put(`${filePathImages}/${id}/${count}.png`, {
 					'Content-Type': 'image/png'
-				}, (err, result) => {
-					if (err !== null){
-						return console.log(err)
-					} 
-					return console.log(result)
-                        
 				})
+                
+				req.on('response', (res) => {
+					if (res.statusCode === 200){
+						console.log('saved to %s', req.url)
+					}
+				})
+				req.end(ss)
 
 				// if on last one 
 				if (count === maxCount - 1) {
