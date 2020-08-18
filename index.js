@@ -8,10 +8,22 @@ const {createWriteStream, readdir} = require('fs')
 const fs = require('fs')
 const {promisify} = require('util')
 const path = require('path')
+const knox = require('knox')
 const d3 = require('d3-dsv')
 
 const dataName = 'gifs.json'
 const data = []
+
+const filePathImages = 'zoo-cams/temp'
+const filePathGIF = 'zoo-cam/output'
+
+const {AWS_KEY, AWS_KEY_SECRET, AWS_BUCKET} = process.env
+
+const client = knox.createClient({
+	key: AWS_KEY,
+	secret: AWS_KEY_SECRET,
+	bucket: AWS_BUCKET
+})
 
 let page = null
 
@@ -147,13 +159,24 @@ async function screenshot(cam) {
 			// take 60 screenshots 
 			for (let count = 0; count < maxCount; count++){
 				// take a screenshot
-				await element.screenshot({path: `${workDir}/${count}.png`}).catch((e) => {
+				const ss = await element.screenshot({path: ''}).catch((e) => {
 					console.error(e); 
 					return('') })
         
+				// write screenshot to AWS
+				client.putFile(ss, {
+					'Content-Type': 'image/png'
+				}, (err, result) => {
+					if (err !== null){
+						return console.log(err)
+					} 
+					return console.log(result)
+                        
+				})
+
 				// if on last one 
 				if (count === maxCount - 1) {
-					 createGif('neuquant', id)
+					 // createGif('neuquant', id)
 				}
 			}
 		}
@@ -172,7 +195,7 @@ async function getZoos(){
 	console.log(sample)
 
 	// launch a single browser
-	const browser = await firefox.launch({headless: false})
+	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
 
 	// launch a single page 
 	page = await browser.newPage()
