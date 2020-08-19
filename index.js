@@ -4,10 +4,7 @@
 const { firefox } = require('playwright');
 const GIFEncoder = require('gif-encoder-2')
 const {createCanvas, Image} = require('canvas')
-const {createWriteStream, readdir} = require('fs')
 const fs = require('fs')
-const {promisify} = require('util')
-const path = require('path')
 const knox = require('knox')
 const d3 = require('d3-dsv')
 
@@ -15,8 +12,8 @@ const dataName = 'gifs.json'
 const data = []
 
 const filePathImages = 'zoo-cams/temp'
-const filePathGIF = 'zoo-cam/output'
-const frameCount = 5
+const filePathGIF = 'zoo-cams/output'
+const frameCount = 15
 
 let videoDimensions = {
 	width: 0,
@@ -34,27 +31,13 @@ const client = knox.createClient({
 
 let page = null
 
-const extension = '.png'
-
-const readdirAsync = promisify(readdir)
-
-const imagesFolder = `${__dirname}/temp`
-
 
 async function createGif(algorithm, id) {
 	return new Promise(async resolve1 => {
-		// const theseImages = client.get(`${filePathImages}/${id}`)
-		// const theseImages = `${imagesFolder}/${id}`
-	
-		// const files = (await readdirAsync(theseImages))
-		// 	.filter(file => path.extname(file).toLowerCase() === extension)
-		// 	.map(d => `${d.substr(0, d.length - 4)}`)
-		// 	.sort((a, b) => a - b)
-		// 	.map(d => `${d.substr(0, d.length)}.png`)
-
 		//  there will always be the same range of image number files
 		// so just iterate and create an array of numbers
-		const imageRange = [...Array(frameCount).keys()] 
+		console.log(`Creating ${id} gif`)
+		const imageRange = [...Array(frameCount).keys()].map((d) => `${filePathImages}/${id}/${d}.png`)
   
 		const [width, height] = await new Promise((resolve2, reject2) => {
 
@@ -64,42 +47,56 @@ async function createGif(algorithm, id) {
 			})
 
 		})
-		console.log({width, height, imageRange})
+
 		const canvasWidth = 500
 		const canvasHeight = 281
 		
-	// 	const dstPath = `${__dirname}/output/${id}.gif`
   
-	// 	const writeStream = createWriteStream(dstPath)
-  
-	// 	writeStream.on('close', () => {
-	// 		resolve1()
-	// 	})
-  
-	// 	const encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
-  
-	// 	encoder.createReadStream().pipe(writeStream)
-	// 	encoder.start()
-	// 	encoder.setDelay(200)
-  
-	// 	const canvas = createCanvas(canvasWidth, canvasHeight)
-	// 	const ctx = canvas.getContext('2d')
-        
-  
-	// 	for (const file of files) {
-	// 		await new Promise(resolve3 => {
-	// 			const image = new Image()
-	// 			image.onload = () => {
-	// 				ctx.drawImage(image, 0, 0, width, height, // source dimensions
-	// 					0, 0, canvasWidth, canvasHeight)
-	// 				encoder.addFrame(ctx)
-	// 				resolve3()
-	// 			}
-				
-	// 			image.src = `${imagesFolder}/${id}/${file}`
-	// 		})
-	// 	}
+		const encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
+	
+		const canvas = createCanvas(canvasWidth, canvasHeight)
+		const ctx = canvas.getContext('2d')
+		encoder.start()
+		encoder.setDelay(200)
+
+		function processImage(file, cb){
+			const image = new Image()
+			image.onload = () => {
+				ctx.drawImage(image, 0, 0, width, height, // source dimensions
+					0, 0, canvasWidth, canvasHeight)
+
+				ctx.getImageData(0, 0, width, height)
+
+				encoder.addFrame(ctx)
+				cb()
+			}
+			image.src = `https://${AWS_BUCKET}.s3.amazonaws.com/${file}`
+		}
+
+		const processedImages = imageRange.map((file) => new Promise((resolve3) => {
+			processImage(file, resolve3)
+		}))
+
+		Promise.all(processedImages).then(() => {
+			encoder.finish()
+			const buffer = encoder.out.getData()
+
+			const req = client.put(`${filePathGIF}/${id}.gif`, {
+				'Content-Type': 'image/gif',
+			})
+
+			req.on('response', (res) => {
+				if (res.statusCode === 200){
+					console.log('saved to %s', req.url)
+				}
+			})
+
+			req.end(buffer)
+			resolve1()
+		})
+		
 	})
+	
 }
 
 
@@ -118,7 +115,7 @@ function timeout(ms){
 
 async function screenshot(cam) {
 	const {url, id, play} = cam
-
+	console.log(`Preparing ${id} for screenshot`)
 	// set working directory
 	const workDir = `./temp/${id}`
 
@@ -198,7 +195,7 @@ async function screenshot(cam) {
 
 				// if on last one 
 				if (count === frameCount - 1) {
-					 // createGif('neuquant', id)
+					 createGif('neuquant', id)
 				}
 			}
 		}
@@ -213,7 +210,7 @@ async function writeData(){
 
 async function getZoos(){
 	const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
-	const sample = webcams.slice(75, 77)
+	const sample = webcams.slice(0, 30)
 
 	// launch a single browser
 	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
@@ -235,5 +232,5 @@ async function getZoos(){
 }
 
 // run the script
-// getZoos()
-createGif('neuquant', 84)
+getZoos()
+// createGif('neuquant', 11)
