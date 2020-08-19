@@ -1,5 +1,5 @@
 
-// process.env.DEBUG='pw:api'
+process.env.DEBUG='pw:api'
 
 const { firefox } = require('playwright');
 const GIFEncoder = require('gif-encoder-2')
@@ -14,6 +14,7 @@ const data = []
 const filePathImages = 'zoo-cams/temp'
 const filePathGIF = 'zoo-cams/output'
 const frameCount = 15
+const frameRange = [...Array(frameCount).keys()]
 
 let videoDimensions = {
 	width: 0,
@@ -113,15 +114,42 @@ function timeout(ms){
 	return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function screenshot(cam) {
+async function singleSS(i, element, id, cb){
+	// take a screenshot
+	const ss = await element.screenshot({path: ''}).catch((e) => {
+		console.error(e); 
+		return('') })
+
+	// measure video dimensions only on first screenshot
+	if (i === 0){
+		videoDimensions = await element.evaluate(() => ({
+			width: document.documentElement.clientWidth,
+			height: document.documentElement.clientHeight
+		}))
+	}
+
+	// write screenshot to AWS
+	const req = client.put(`${filePathImages}/${id}/${i}.png`, {
+		'Content-Type': 'image/png',
+		'x-amz-meta-height': videoDimensions.height,
+		'x-amz-meta-width': videoDimensions.width
+	})
+	
+	req.on('response', (res) => {
+		if (res.statusCode === 200){
+			console.log('saved to %s', req.url)
+		}
+	})
+
+	req.end(ss)
+
+	// callback
+	cb()
+}
+
+async function screenshot(cam, cb) {
 	const {url, id, play} = cam
 	console.log(`Preparing ${id} for screenshot`)
-	// set working directory
-	const workDir = `./temp/${id}`
-
-	// check for working directory
-	if (!fs.existsSync(workDir)) fs.mkdirSync(workDir)
-
 
 	// navigate to URL
 	await page.goto(url).catch((e) => {console.error(e)})
@@ -142,7 +170,6 @@ async function screenshot(cam) {
 	if (element){
 		// after video has loaded, then record data
 		await collectData(cam) 
-
 		
 		await timeout(5000)
 		// find out if video is paused
@@ -157,49 +184,25 @@ async function screenshot(cam) {
 		// check again
 		paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(e)})
 		
-		
 		// if video is playing, start taking screenshots
 		// otherwise move on to the next video
 		if (paused !== true ){
+			console.log('screenshots!')
+			const individualScreenshots = frameRange.map((i) => new Promise((resolveSS) => {
+				console.log({i, element, resolveSS})
+				singleSS(i, element, id, resolveSS)
+			})) 
+
+			// when all the screenshots are taken
+			Promise.all(individualScreenshots).then(() => {
+				createGif('neuquant', id)
+			})
 			
-			// take 60 screenshots 
-			for (let count = 0; count < frameCount; count++){
-				// take a screenshot
-				const ss = await element.screenshot({path: ''}).catch((e) => {
-					console.error(e); 
-					return('') })
-
-				// measure video dimensions only on first screenshot
-				if (count === 0){
-					videoDimensions = await element.evaluate(() => ({
-						width: document.documentElement.clientWidth,
-						height: document.documentElement.clientHeight
-					}))
-        
-				}
-				// console.log(ss)
-
-				// write screenshot to AWS
-				const req = client.put(`${filePathImages}/${id}/${count}.png`, {
-					'Content-Type': 'image/png',
-					'x-amz-meta-height': videoDimensions.height,
-					'x-amz-meta-width': videoDimensions.width
-				})
-                
-				req.on('response', (res) => {
-					if (res.statusCode === 200){
-						console.log('saved to %s', req.url)
-					}
-				})
-				req.end(ss)
-
-				// if on last one 
-				if (count === frameCount - 1) {
-					 createGif('neuquant', id)
-				}
-			}
 		}
 	}
+
+	// promise callback
+	cb()
 }
 
 async function writeData(){
@@ -210,7 +213,7 @@ async function writeData(){
 
 async function getZoos(){
 	const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
-	const sample = webcams.slice(0, 30)
+	const sample = webcams.slice(10, 12)
 
 	// launch a single browser
 	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
@@ -221,13 +224,20 @@ async function getZoos(){
 	page.setDefaultTimeout(10000)
 
 	// navigate to each page one at a time
-	for (const cam of sample){
-		await screenshot(cam)
-	}
+	// sample.forEach(async cam => {
+	// 	await screenshot(cam)
+	// })
+	const finishedCams = sample.map((cam) => new Promise((resolveCam) => {
+		screenshot(cam, resolveCam)
+	}))
 
-	// when done, close the browser
-	await browser.close()
-	await writeData()
+	Promise.all(finishedCams).then(() => {
+		// when done, close the browser
+	 browser.close()
+	 writeData()
+	})
+
+
 
 }
 
