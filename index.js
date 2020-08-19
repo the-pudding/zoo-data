@@ -16,6 +16,12 @@ const data = []
 
 const filePathImages = 'zoo-cams/temp'
 const filePathGIF = 'zoo-cam/output'
+const frameCount = 5
+
+let videoDimensions = {
+	width: 0,
+	height: 0
+}
 
 const {AWS_KEY, AWS_KEY_SECRET, AWS_BUCKET} = process.env
 
@@ -25,7 +31,6 @@ const client = knox.createClient({
 	bucket: AWS_BUCKET
 })
 
-console.log(client)
 
 let page = null
 
@@ -38,60 +43,62 @@ const imagesFolder = `${__dirname}/temp`
 
 async function createGif(algorithm, id) {
 	return new Promise(async resolve1 => {
-
-		const theseImages = `${imagesFolder}/${id}`
+		// const theseImages = client.get(`${filePathImages}/${id}`)
+		// const theseImages = `${imagesFolder}/${id}`
 	
-		const files = (await readdirAsync(theseImages))
-			.filter(file => path.extname(file).toLowerCase() === extension)
-			.map(d => `${d.substr(0, d.length - 4)}`)
-			.sort((a, b) => a - b)
-			.map(d => `${d.substr(0, d.length)}.png`)
+		// const files = (await readdirAsync(theseImages))
+		// 	.filter(file => path.extname(file).toLowerCase() === extension)
+		// 	.map(d => `${d.substr(0, d.length - 4)}`)
+		// 	.sort((a, b) => a - b)
+		// 	.map(d => `${d.substr(0, d.length)}.png`)
+
+		//  there will always be the same range of image number files
+		// so just iterate and create an array of numbers
+		const imageRange = [...Array(frameCount).keys()] 
   
 		const [width, height] = await new Promise((resolve2, reject2) => {
-			const image = new Image()
-			
-            
-			image.onload = function(){
-				resolve2([image.width, image.height])
-			}
 
-			image.src = `${theseImages}/${files[0]}`
-			
+			// get the file and metadata from s3 without loading it
+			client.getFile(`${filePathImages}/${id}/0.png`, (err, res) => {
+				resolve2([res.headers['x-amz-meta-width'], res.headers['x-amz-meta-height']])
+			})
+
 		})
+		console.log({width, height, imageRange})
 		const canvasWidth = 500
 		const canvasHeight = 281
 		
-		const dstPath = `${__dirname}/output/${id}.gif`
+	// 	const dstPath = `${__dirname}/output/${id}.gif`
   
-		const writeStream = createWriteStream(dstPath)
+	// 	const writeStream = createWriteStream(dstPath)
   
-		writeStream.on('close', () => {
-			resolve1()
-		})
+	// 	writeStream.on('close', () => {
+	// 		resolve1()
+	// 	})
   
-		const encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
+	// 	const encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
   
-		encoder.createReadStream().pipe(writeStream)
-		encoder.start()
-		encoder.setDelay(200)
+	// 	encoder.createReadStream().pipe(writeStream)
+	// 	encoder.start()
+	// 	encoder.setDelay(200)
   
-		const canvas = createCanvas(canvasWidth, canvasHeight)
-		const ctx = canvas.getContext('2d')
+	// 	const canvas = createCanvas(canvasWidth, canvasHeight)
+	// 	const ctx = canvas.getContext('2d')
         
   
-		for (const file of files) {
-			await new Promise(resolve3 => {
-				const image = new Image()
-				image.onload = () => {
-					ctx.drawImage(image, 0, 0, width, height, // source dimensions
-						0, 0, canvasWidth, canvasHeight)
-					encoder.addFrame(ctx)
-					resolve3()
-				}
+	// 	for (const file of files) {
+	// 		await new Promise(resolve3 => {
+	// 			const image = new Image()
+	// 			image.onload = () => {
+	// 				ctx.drawImage(image, 0, 0, width, height, // source dimensions
+	// 					0, 0, canvasWidth, canvasHeight)
+	// 				encoder.addFrame(ctx)
+	// 				resolve3()
+	// 			}
 				
-				image.src = `${imagesFolder}/${id}/${file}`
-			})
-		}
+	// 			image.src = `${imagesFolder}/${id}/${file}`
+	// 		})
+	// 	}
 	})
 }
 
@@ -157,17 +164,29 @@ async function screenshot(cam) {
 		// if video is playing, start taking screenshots
 		// otherwise move on to the next video
 		if (paused !== true ){
-			const maxCount = 30
+			
 			// take 60 screenshots 
-			for (let count = 0; count < maxCount; count++){
+			for (let count = 0; count < frameCount; count++){
 				// take a screenshot
 				const ss = await element.screenshot({path: ''}).catch((e) => {
 					console.error(e); 
 					return('') })
+
+				// measure video dimensions only on first screenshot
+				if (count === 0){
+					videoDimensions = await element.evaluate(() => ({
+						width: document.documentElement.clientWidth,
+						height: document.documentElement.clientHeight
+					}))
         
+				}
+				// console.log(ss)
+
 				// write screenshot to AWS
 				const req = client.put(`${filePathImages}/${id}/${count}.png`, {
-					'Content-Type': 'image/png'
+					'Content-Type': 'image/png',
+					'x-amz-meta-height': videoDimensions.height,
+					'x-amz-meta-width': videoDimensions.width
 				})
                 
 				req.on('response', (res) => {
@@ -178,7 +197,7 @@ async function screenshot(cam) {
 				req.end(ss)
 
 				// if on last one 
-				if (count === maxCount - 1) {
+				if (count === frameCount - 1) {
 					 // createGif('neuquant', id)
 				}
 			}
@@ -194,8 +213,7 @@ async function writeData(){
 
 async function getZoos(){
 	const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
-	const sample = webcams.slice(75, 80)
-	console.log(sample)
+	const sample = webcams.slice(75, 77)
 
 	// launch a single browser
 	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
@@ -217,4 +235,5 @@ async function getZoos(){
 }
 
 // run the script
-getZoos()
+// getZoos()
+createGif('neuquant', 84)
