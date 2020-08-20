@@ -17,6 +17,8 @@ const filePathGIF = 'zoo-cams/output'
 const frameCount = 15
 const frameRange = [...Array(frameCount).keys()]
 
+const allScreenshots = []
+
 let videoDimensions = {
 	width: 0,
 	height: 0
@@ -121,6 +123,29 @@ async function singleSS(i, element, id){
 
 }
 
+async function sendToS3(ss, id, frame){
+
+	return new Promise((resolve, reject) => {
+		// write screenshot to AWS
+		const req = client.put(`${filePathImages}/${id}/${frame}.png`, {
+			'Content-Type': 'image/png',
+			'x-amz-meta-height': videoDimensions.height,
+			'x-amz-meta-width': videoDimensions.width
+		})
+
+		const response = req.on('response', (res) => {
+			if (res.statusCode === 200){
+				console.log('saved to %s', req.url)
+				// resolve(res)
+				
+			}
+		})
+
+		req.end(ss, resolve)
+	})
+
+}
+
 async function takeScreenshots(element, id){
 	// eslint-disable-next-line no-restricted-syntax
 	for (const frame of frameRange){
@@ -129,35 +154,34 @@ async function takeScreenshots(element, id){
 		const ss = await element.screenshot({path: ''}).catch((e) => {
 			console.error(e); 
 			return('') })
-	
+
+		// save all ss data locally 
+		allScreenshots.push({index: frame, ss})
+	}
+
+	// then one by one save images to s3
+	for (const single of allScreenshots){
+		const {ss, index} = single
+
 		// measure video dimensions only on first screenshot
-		if (frame === 0){
+		if (index === 0){
 			videoDimensions = await element.evaluate(() => ({
 				width: document.documentElement.clientWidth,
 				height: document.documentElement.clientHeight
 			}))
 		}
 	
-		// write screenshot to AWS
-		const req = await client.put(`${filePathImages}/${id}/${frame}.png`, {
-			'Content-Type': 'image/png',
-			'x-amz-meta-height': videoDimensions.height,
-			'x-amz-meta-width': videoDimensions.width
-		})
+		await sendToS3(ss, id, index)
 		
-		const response = await req.on('response', (res) => {
-			if (res.statusCode === 200){
-				console.log('saved to %s', req.url)
-			}
-			console.log('checked response')
-			return res.statusCode
-		})
-
-		console.log(`response for ${frame} is ${response}`)
-	
-		await req.end(ss)
+		 
+		 if (index === frameCount - 1){
+			await createGif('neuquant', id)
+			allScreenshots = []
+		}
 	}
 	console.log('loop done')
+	
+
 	return id
 	
 }
@@ -231,7 +255,7 @@ async function writeData(){
 
 async function getZoos(){
 	const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
-	const sample = webcams.slice(10, 12)
+	const sample = webcams.slice(78, 81)
 
 	// launch a single browser
 	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
