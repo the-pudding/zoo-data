@@ -1,5 +1,6 @@
+/* eslint-disable no-await-in-loop */
 
-process.env.DEBUG='pw:api'
+// process.env.DEBUG='pw:api'
 
 const { firefox } = require('playwright');
 const GIFEncoder = require('gif-encoder-2')
@@ -114,40 +115,55 @@ function timeout(ms){
 	return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function singleSS(i, element, id, cb){
+async function singleSS(i, element, id){
 	// take a screenshot
-	const ss = await element.screenshot({path: ''}).catch((e) => {
-		console.error(e); 
-		return('') })
-
-	// measure video dimensions only on first screenshot
-	if (i === 0){
-		videoDimensions = await element.evaluate(() => ({
-			width: document.documentElement.clientWidth,
-			height: document.documentElement.clientHeight
-		}))
-	}
-
-	// write screenshot to AWS
-	const req = client.put(`${filePathImages}/${id}/${i}.png`, {
-		'Content-Type': 'image/png',
-		'x-amz-meta-height': videoDimensions.height,
-		'x-amz-meta-width': videoDimensions.width
-	})
 	
-	req.on('response', (res) => {
-		if (res.statusCode === 200){
-			console.log('saved to %s', req.url)
-		}
-	})
 
-	req.end(ss)
-
-	// callback
-	cb()
 }
 
-async function screenshot(cam, cb) {
+async function takeScreenshots(element, id){
+	// eslint-disable-next-line no-restricted-syntax
+	for (const frame of frameRange){
+		console.log(frame)
+		// eslint-disable-next-line no-await-in-loop
+		const ss = await element.screenshot({path: ''}).catch((e) => {
+			console.error(e); 
+			return('') })
+	
+		// measure video dimensions only on first screenshot
+		if (frame === 0){
+			videoDimensions = await element.evaluate(() => ({
+				width: document.documentElement.clientWidth,
+				height: document.documentElement.clientHeight
+			}))
+		}
+	
+		// write screenshot to AWS
+		const req = await client.put(`${filePathImages}/${id}/${frame}.png`, {
+			'Content-Type': 'image/png',
+			'x-amz-meta-height': videoDimensions.height,
+			'x-amz-meta-width': videoDimensions.width
+		})
+		
+		const response = await req.on('response', (res) => {
+			if (res.statusCode === 200){
+				console.log('saved to %s', req.url)
+			}
+			console.log('checked response')
+			return res.statusCode
+		})
+
+		console.log(`response for ${frame} is ${response}`)
+	
+		await req.end(ss)
+	}
+	console.log('loop done')
+	return id
+	
+}
+
+
+async function screenshot(cam) {
 	const {url, id, play} = cam
 	console.log(`Preparing ${id} for screenshot`)
 
@@ -161,6 +177,7 @@ async function screenshot(cam, cb) {
 			await page.click(`${d}`).catch((e) => console.error(e))
 		})
 	}
+
 
 	// wait for video
 	await page.waitForSelector('video').catch((e) => {console.error(e)})
@@ -187,22 +204,23 @@ async function screenshot(cam, cb) {
 		// if video is playing, start taking screenshots
 		// otherwise move on to the next video
 		if (paused !== true ){
-			console.log('screenshots!')
-			const individualScreenshots = frameRange.map((i) => new Promise((resolveSS) => {
-				console.log({i, element, resolveSS})
-				singleSS(i, element, id, resolveSS)
-			})) 
+			await takeScreenshots(element, id)
+			// await createGif('neuquant', id)
+			// console.log('screenshots!')
+			// const individualScreenshots = frameRange.map((i) => new Promise(async (resolveSS) => {
+			// 	console.log({i})
+			// 	await singleSS(i, element, id, resolveSS)
+			// })) 
 
 			// when all the screenshots are taken
-			Promise.all(individualScreenshots).then(() => {
-				createGif('neuquant', id)
-			})
+			// Promise.all(individualScreenshots).then(() => {
+			// 	console.log('making gifs')
+			// 	createGif('neuquant', id)
+			// })
 			
 		}
 	}
 
-	// promise callback
-	cb()
 }
 
 async function writeData(){
@@ -227,15 +245,24 @@ async function getZoos(){
 	// sample.forEach(async cam => {
 	// 	await screenshot(cam)
 	// })
-	const finishedCams = sample.map((cam) => new Promise((resolveCam) => {
-		screenshot(cam, resolveCam)
-	}))
 
-	Promise.all(finishedCams).then(() => {
-		// when done, close the browser
-	 browser.close()
-	 writeData()
-	})
+	for (const cam of sample){
+		await screenshot(cam)
+	}
+
+	await browser.close()
+	await writeData()
+	// const finishedCams = sample.map((cam) => new Promise(async (resolveCam) => {
+	// 	await screenshot(cam, resolveCam)
+	// }))
+
+	// console.log(finishedCams)
+
+	// Promise.all(finishedCams).then(() => {
+	// 	// when done, close the browser
+	//  browser.close()
+	//  writeData()
+	// })
 
 
 
