@@ -66,15 +66,13 @@ async function createGif(algorithm, id) {
 
 		async function processImage(file){
 			await new Promise(resolveProc => {
-				console.log(file)
-				// wrap this in a promise?
 				const image = new Image()
 				image.onload = () => {
 					ctx.drawImage(image, 0, 0, width, height, // source dimensions
 						0, 0, canvasWidth, canvasHeight)
 
 					ctx.getImageData(0, 0, width, height)
-					console.log('added')
+					console.log()
 
 					encoder.addFrame(ctx)
 					resolveProc()
@@ -82,35 +80,34 @@ async function createGif(algorithm, id) {
 				}
 				image.src = `https://${AWS_BUCKET}.s3.amazonaws.com/${file}`
 
-			})
-			
-			return encoder
+			}).catch((e) => console.error(e))
 		}
 
 
 		  async function orderImages(){
-			  const completed = []
+			
 			  for (const file of imageRange){
-				completed.push(processImage(file))
+				await processImage(file)
 			  }
 
-			  await Promise.all(completed).then(() => {
-				encoder.finish()
-				const buffer = encoder.out.getData()
+			encoder.finish()
+			const buffer = encoder.out.getData()
 
-				const req = client.put(`${filePathGIF}/${id}.gif`, {
-					'Content-Type': 'image/gif',
-				})
+			const req = client.put(`${filePathGIF}/${id}.gif`, {
+				'Content-Type': 'image/gif',
+			})
 
-				req.on('response', (res) => {
-					if (res.statusCode === 200){
-						console.log('saved to %s', req.url)
-					}
-				})
+			req.on('response', (res) => {
+				if (res.statusCode === 200){
+					console.log('saved to %s', req.url)
+					
+					resolve1()
+				}
+			})
 
-				req.end(buffer)
-				resolve1()
-			  })
+			req.end(buffer)
+			
+			 
 		  }
 
 		  await orderImages()
@@ -134,7 +131,7 @@ function timeout(ms){
 }
 
 
-async function sendToS3(ss, id, frame){
+async function sendToS3(ss, id, frame, resolution){
 
 	return new Promise((resolve, reject) => {
 		// write screenshot to AWS
@@ -148,100 +145,119 @@ async function sendToS3(ss, id, frame){
 			if (res.statusCode === 200){
 				console.log('saved to %s', req.url)
 				resolve(res)
-				
+				resolution()
+				return res.statusCode
 			}
 		})
 
 		req.end(ss)
 	})
 
-
+	
 }
 
 async function takeScreenshots(element, id){
-	// eslint-disable-next-line no-restricted-syntax
-	for (const frame of frameRange){
+	await new Promise(async resolveSS => {
+		// eslint-disable-next-line no-restricted-syntax
+		for (const frame of frameRange){
 	
 		// eslint-disable-next-line no-await-in-loop
-		const ss = await element.screenshot({path: ''}).catch((e) => {
-			console.error(e); 
-			return('') })
+			const ss = await element.screenshot({path: ''}).catch((e) => {
+				console.error(e); 
+				return('') })
 
-		// save all ss data locally 
-		allScreenshots.push({index: frame, ss})
-	}
-
-	// then one by one save images to s3 in parallel
-	const savedScreenshots = allScreenshots.map((single) => new Promise(async (resolve3) => {
-		const {ss, index} = single
-		// measure video dimensions only on first screenshot
-		if (index === 0){
-			videoDimensions =  await element.evaluate(() => ({
-				width: document.documentElement.clientWidth,
-				height: document.documentElement.clientHeight
-			}))
+			// save all ss data locally 
+			allScreenshots.push({index: frame, ss})
 		}
 
-	
-		 await sendToS3(ss, id, index)
-		 resolve3()
-	}))
+		// then one by one save images to s3 in parallel
+		const savedScreenshots = allScreenshots.map((single) => new Promise(async (resolve3) => {
+			const {ss, index} = single
+			// measure video dimensions only on first screenshot
+			if (index === 0){
+				videoDimensions =  await element.evaluate(() => ({
+					width: document.documentElement.clientWidth,
+					height: document.documentElement.clientHeight
+				}))
+			}
 
-	// when all screenshots have been saved, create a gif
-	Promise.all(savedScreenshots).then(() => {
-		console.log(`Saved all screenshots for ${id}`)
-		createGif('neuquant', id)
-		allScreenshots = []
+	
+		 await sendToS3(ss, id, index, resolve3)
+		//  resolve3()
+		}))
+
+		// when all screenshots have been saved, create a gif
+		Promise.all(savedScreenshots).then(() => {
+			console.log(`Saved all screenshots for ${id}`)
+			resolveSS()
+			allScreenshots = []
+		})
+
 	})
+	
+	// return savedScreenshots
 	
 }
 
 
 async function screenshot(cam) {
-	const {url, id, play} = cam
-	console.log(`Preparing ${id} for screenshot`)
+	
 
-	// navigate to URL
-	await page.goto(url).catch((e) => {console.error(e)})
+	let element = null
 
-	// if there's a play button, click it
-	if (play) {
-		const buttons = play.split(', ')
-		buttons.forEach(async d => {
-			await page.click(`${d}`).catch((e) => console.error(e))
-		})
-	}
+	try {
+		const {url, id, play} = cam
+		console.log(`Preparing ${id} for screenshot`)
+
+		// navigate to URL
+		await page.goto(url).catch((e) => {console.error(e)})
+
+		// if there's a play button, click it
+		if (play) {
+			const buttons = play.split(', ')
+			buttons.forEach(async d => {
+				await page.click(`${d}`).catch((e) => console.error(e))
+			})
+		}
 
 
-	// wait for video
-	await page.waitForSelector('video').catch((e) => {console.error(e)})
+		// wait for video
+		await page.waitForSelector('video').catch((e) => {console.error(e)})
 
-	const element = await page.$('video').catch((e) => {console.error(e)})
+		element = await page.$('video').catch((e) => {console.error(e)})
 
-	if (element){
+		if (element){
 		// after video has loaded, then record data
-		await collectData(cam) 
+			await collectData(cam) 
 		
-		await timeout(5000)
-		// find out if video is paused
-		let paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(e)})
+			await timeout(5000)
+			// find out if video is paused
+			let paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(e)})
 
-		// if it's still paused, click the page and wait 10 seconds before checking again
-		if (paused === true) {
-			await page.click('body').catch((e) => {console.error(e)})	
-			await timeout(10000)
-		}
+			// if it's still paused, click the page and wait 10 seconds before checking again
+			if (paused === true) {
+				await page.click('body').catch((e) => {console.error(e)})	
+				await timeout(10000)
+			}
 
-		// check again
-		paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(e)})
+			// check again
+			paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(e)})
 		
-		// if video is playing, start taking screenshots
-		// otherwise move on to the next video
-		if (paused !== true ){
-			await takeScreenshots(element, id)
+			// if video is playing, start taking screenshots
+			// otherwise move on to the next video
+			// if (paused !== true ){
+			// 	//await takeScreenshots(element, id)
+			// return element
+			// }
+			// return null
 		}
+	
+	} catch (err) {
+		console.log(err)
 	}
 
+	return element
+	
 }
 
 async function writeData(){
@@ -250,9 +266,28 @@ async function writeData(){
 	})
 }
 
+async function loopThroughCams(sample){
+
+	return new Promise(async resolve => {
+		for (const [index, cam] of sample.entries()){
+			console.log({index, cam})
+			const vidElement = await screenshot(cam)
+			await takeScreenshots(vidElement, cam.id)
+			await createGif('neuquant', cam.id)
+
+			if (index === sample.length - 1) {
+				resolve()
+			}
+			
+		}
+
+	})
+	
+}
+
 async function getZoos(){
 	const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
-	const sample = webcams.slice(5, 8)
+	const sample = webcams.slice(15, 17)
 
 	// launch a single browser
 	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
@@ -262,9 +297,7 @@ async function getZoos(){
 	// set a timeout for the page of 10 seconds
 	page.setDefaultTimeout(10000)
 
-	for (const cam of sample){
-		await screenshot(cam)
-	}
+	await loopThroughCams(sample)
 
 	await browser.close()
 	await writeData()
@@ -273,4 +306,4 @@ async function getZoos(){
 
 // run the script
 getZoos()
-// createGif('neuquant', 90)
+// createGif('neuquant', 6)
