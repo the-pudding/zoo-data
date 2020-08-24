@@ -72,13 +72,13 @@ async function createGif(algorithm, id) {
 						0, 0, canvasWidth, canvasHeight)
 
 					ctx.getImageData(0, 0, width, height)
-					console.log()
+					
 
 					encoder.addFrame(ctx)
 					resolveProc()
 				
 				}
-				image.src = `https://${AWS_BUCKET}.s3.amazonaws.com/${file}`
+				image.src = `data:image/png;base64,${file.str}`
 
 			}).catch((e) => console.error(e))
 		}
@@ -86,7 +86,7 @@ async function createGif(algorithm, id) {
 
 		  async function orderImages(){
 			
-			  for (const file of imageRange){
+			  for (const file of allScreenshots){
 				await processImage(file)
 			  }
 
@@ -102,6 +102,7 @@ async function createGif(algorithm, id) {
 					console.log('saved to %s', req.url)
 					
 					resolve1()
+					allScreenshots = []
 				}
 			})
 
@@ -131,11 +132,11 @@ function timeout(ms){
 }
 
 
-async function sendToS3(ss, id, frame, resolution){
+async function sendToS3(ss, id){
 
 	return new Promise((resolve, reject) => {
 		// write screenshot to AWS
-		const req = client.put(`${filePathImages}/${id}/${frame}.png`, {
+		const req = client.put(`${filePathImages}/${id}/0.png`, {
 			'Content-Type': 'image/png',
 			'x-amz-meta-height': videoDimensions.height,
 			'x-amz-meta-width': videoDimensions.width
@@ -145,7 +146,7 @@ async function sendToS3(ss, id, frame, resolution){
 			if (res.statusCode === 200){
 				console.log('saved to %s', req.url)
 				resolve(res)
-				resolution()
+			
 				return res.statusCode
 			}
 		})
@@ -166,32 +167,53 @@ async function takeScreenshots(element, id){
 				console.error(e); 
 				return('') })
 
+			const str = ss.toString('base64')
+
+
 			// save all ss data locally 
-			allScreenshots.push({index: frame, ss})
+			allScreenshots.push({index: frame, str, ss})
 		}
 
-		// then one by one save images to s3 in parallel
-		const savedScreenshots = allScreenshots.map((single) => new Promise(async (resolve3) => {
-			const {ss, index} = single
-			// measure video dimensions only on first screenshot
-			if (index === 0){
-				videoDimensions =  await element.evaluate(() => ({
-					width: document.documentElement.clientWidth,
-					height: document.documentElement.clientHeight
-				}))
-			}
+		// save only the first image to AWS
+		async function saveFirst(){
+			videoDimensions =  await element.evaluate(() => ({
+				width: document.documentElement.clientWidth,
+				height: document.documentElement.clientHeight
+			}))
 
-	
-		 await sendToS3(ss, id, index, resolve3)
-		//  resolve3()
-		}))
+			const first = allScreenshots.filter(d => d.index === 0)
+
+			await sendToS3(first.ss, id)
+		}
+
+		// run function to just save first image
+		// all others are still saved locally
+		await saveFirst()
+		// then resolve this promise to continue to gif-making
+		resolveSS()
+
+		// // then one by one save images to s3 in parallel
+		// const savedScreenshots = allScreenshots.map((single) => new Promise(async (resolve3) => {
+		// 	const {ss, index} = single
+		// 	// measure video dimensions only on first screenshot
+		// 	if (index === 0){
+		// 		videoDimensions =  await element.evaluate(() => ({
+		// 			width: document.documentElement.clientWidth,
+		// 			height: document.documentElement.clientHeight
+		// 		}))
+
+		// 		await sendToS3(ss, id, index)
+		// 	}
+
+		//  	resolve3()
+		// }))
 
 		// when all screenshots have been saved, create a gif
-		Promise.all(savedScreenshots).then(() => {
-			console.log(`Saved all screenshots for ${id}`)
-			resolveSS()
-			allScreenshots = []
-		})
+		// Promise.all(savedScreenshots).then(() => {
+		// 	console.log(`Saved all screenshots for ${id}`)
+		// 	resolveSS()
+		// 	// allScreenshots = []
+		// })
 
 	})
 	
@@ -287,7 +309,7 @@ async function loopThroughCams(sample){
 
 async function getZoos(){
 	const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
-	const sample = webcams.slice(15, 17)
+	const sample = webcams.slice(30, 32)
 
 	// launch a single browser
 	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
