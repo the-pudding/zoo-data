@@ -311,7 +311,7 @@ async function makeZoo(cam){
 	async function getZoos(){
 		// await loopThroughCams(sample)
 		await screenshot()
-		// console.log(vidElement)
+		console.log(allScreenshots)
 		// await takeScreenshots(vidElement)
 		if (allScreenshots.length > 0){
 			await createGif('neuquant')
