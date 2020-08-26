@@ -43,7 +43,7 @@ async function makeZoo(cam){
 		height: 0
 	}
 	
-	
+	const browser = null
 
 	async function createGif(algorithm) {
 		const {id} = cam
