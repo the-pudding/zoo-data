@@ -43,7 +43,7 @@ async function makeZoo(cam){
 		height: 0
 	}
 	
-	const browser = null
+	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
 
 	async function createGif(algorithm) {
 		const {id} = cam
@@ -220,7 +220,7 @@ async function makeZoo(cam){
 		let element = null
 
 		try {
-			const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
+		
 
 			// launch a single page 
 			page = await browser.newPage()
@@ -327,20 +327,20 @@ async function makeZoo(cam){
 }
 
 // run the script in parallel
-async function setup(group, cb){
+// async function setup(group, cb){
 
-	// iterate over script in parallel, saving the promises
-	const finished = group.map(cam => new Promise(async (resolve) => {
-		await makeZoo(cam)
-		resolve()
-		cb()
-	}).catch(e => console.error(e))
+// 	// iterate over script in parallel, saving the promises
+// 	const finished = group.map(cam => new Promise(async (resolve) => {
+// 		await makeZoo(cam)
+// 		resolve()
+// 		cb()
+// 	}).catch(e => console.error(e))
 	
-	)
+// 	)
 
-	return finished
+// 	return finished
 	
-}
+// }
 
 async function runBatches(){
 	// run the script in batches
