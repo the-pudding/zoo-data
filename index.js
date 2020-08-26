@@ -43,7 +43,7 @@ async function makeZoo(cam){
 		height: 0
 	}
 	
-	const browser = await firefox.launch({headless: false,  args: ['--no-sandbox'] })
+	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
 
 	async function createGif(algorithm) {
 		const {id} = cam
@@ -335,8 +335,8 @@ async function setup(group, cb){
 async function runBatches(){
 	// run the script in batches
 
-	for (let i = 0; i < 5; i += 1){
-		const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
+	for (let i = 0; i < 2; i += 1){
+		const finished = webcams.slice(i, i + 2).map(async cam =>  makeZoo(cam))
 
 		await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
 		
