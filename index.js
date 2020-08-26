@@ -52,14 +52,14 @@ async function makeZoo(cam){
 		// so just iterate and create an array of numbers
 			console.log(`Creating ${id} gif`)
   
-			const [width, height] = await new Promise((resolve2, reject2) => {
+			const [width, height] = await new Promise((resolve2) => {
 
 			// get the file and metadata from s3 without loading it
 				client.getFile(`${filePathImages}/${id}.png`, (err, res) => {
 					resolve2([res.headers['x-amz-meta-width'], res.headers['x-amz-meta-height']])
 				})
 
-			})
+			}).catch(e => console.error(e))
 
 			const canvasWidth = 500
 			const canvasHeight = 281
@@ -111,8 +111,10 @@ async function makeZoo(cam){
 					
 						resolve1()
 						allScreenshots = []
-					}
+					} 
 				})
+
+				req.on('error', e => console.error(e))
 
 				req.end(buffer)
 			
@@ -136,7 +138,7 @@ async function makeZoo(cam){
 	}
 
 	function timeout(ms){
-		return new Promise(resolve => setTimeout(resolve, ms))
+		return new Promise(resolve => setTimeout(resolve, ms)).catch(e => console.error(e))
 	}
 
 
@@ -161,6 +163,8 @@ async function makeZoo(cam){
 				}
 			})
 
+			req.on('error', e => console.error(e))
+
 			req.end(ss)
 		})
 
@@ -168,7 +172,7 @@ async function makeZoo(cam){
 	}
 
 	async function takeScreenshots(element){
-		await new Promise(async resolveSS => {
+		await new Promise(async (resolveSS) => {
 			const {id} = cam			
 			
 			// save only the first image to AWS
@@ -176,7 +180,7 @@ async function makeZoo(cam){
 				videoDimensions =  await element.evaluate(() => ({
 					width: document.documentElement.clientWidth,
 					height: document.documentElement.clientHeight
-				}))
+				})).catch(e => console.error(e))
 
 				await sendToS3(ss)
 			}
@@ -201,13 +205,10 @@ async function makeZoo(cam){
 				}
 			}
  
-
-		
-
 			// then resolve this promise to continue to gif-making
 			resolveSS()
 
-		})
+		}).catch((e) => console.error(e))
 	
 	}
 
@@ -316,24 +317,36 @@ async function makeZoo(cam){
 }
 
 // run the script in parallel
-async function setup(group){
+async function setup(group, cb){
 
 	// iterate over script in parallel, saving the promises
-	group.map(cam => new Promise(async (resolve) => {
+	const finished = group.map(cam => new Promise(async (resolve) => {
 		await makeZoo(cam)
 		resolve()
-	}))
+		cb()
+	}).catch(e => console.error(e))
+	
+	)
+
+	return finished
 	
 }
 
-// run the script in batches
-for (let i = 0; i < 20; i += 10){
-	const sub = webcams.slice(i, i + 10)
-	setup(sub)
+async function runBatches(){
+	// run the script in batches
+
+	for (let i = 0; i < webcams.length; i += 5){
+		const finished = webcams.slice(i, i + 5).map(async cam =>  makeZoo(cam))
+
+		await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
+		
+	}
 }
 
 
-setup()
+runBatches()
+
+// setup()
 
 // sample.forEach(async cam => {
 // 	await makeZoo(cam)
