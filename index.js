@@ -43,8 +43,7 @@ async function makeZoo(cam){
 		height: 0
 	}
 	
-	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox', '--disable-setuid-sandbox',
-		'--disable-dev-shm-usage', '--single-process'] })
+	
 
 	async function createGif(algorithm) {
 		const {id} = cam
@@ -215,17 +214,22 @@ async function makeZoo(cam){
 
 
 	async function screenshot() {
-
-		// launch a single page 
-		page = await browser.newPage()
-		// set a timeout for the page of 10 seconds
-		page.setDefaultTimeout(15000)
+		
 
 
 		let element = null
 
 		try {
-			
+			const browser = await firefox.launch({headless: true,  args: ['--no-sandbox'] })
+
+			// launch a single page 
+			page = await browser.newPage()
+			// set a timeout for the page of 10 seconds
+			page.setDefaultTimeout(15000)
+
+			const full = await page.screenshot({type: 'png'})
+			console.log(full)
+
 			const {url, id, play} = cam
 			console.log(`Preparing ${id} for screenshot`)
 
