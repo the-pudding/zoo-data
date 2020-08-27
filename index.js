@@ -216,7 +216,6 @@ async function makeZoo(cam){
 	async function screenshot() {
 		
 
-
 		let element = null
 
 		try {
@@ -233,6 +232,9 @@ async function makeZoo(cam){
 			// navigate to URL
 			await page.goto(url).catch((e) => {console.error(e)})
 			// await page.waitForLoadState({ waitUntil: 'domcontentloaded' }).catch((e) => {console.error(e)})
+
+			const full = await page.screenshot()
+			await sendToS3(full)
 
 			// if there's a play button, click it
 			if (play) {
