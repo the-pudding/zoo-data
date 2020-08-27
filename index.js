@@ -345,6 +345,7 @@ async function runBatches(){
 
 	for (let i = 0; i < 2; i += 1){
 		const finished = webcams.slice(i, i + 2).map(async cam =>  makeZoo(cam))
+		console.log(finished)
 
 		await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
 		
