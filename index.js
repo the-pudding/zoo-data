@@ -3,7 +3,7 @@
 
 process.env.DEBUG='pw:api'
 
-const { firefox } = require('playwright');
+const { firefox } = require('playwright-firefox');
 const GIFEncoder = require('gif-encoder-2')
 const {createCanvas, Image} = require('canvas')
 const fs = require('fs')
@@ -227,9 +227,6 @@ async function makeZoo(cam){
 			// set a timeout for the page of 10 seconds
 			page.setDefaultTimeout(15000)
 
-			const full = await page.screenshot({type: 'png'})
-			console.log(full)
-
 			const {url, id, play} = cam
 			console.log(`Preparing ${id} for screenshot`)
 
@@ -311,7 +308,6 @@ async function makeZoo(cam){
 	async function getZoos(){
 		// await loopThroughCams(sample)
 		await screenshot()
-		console.log(allScreenshots)
 		// await takeScreenshots(vidElement)
 		if (allScreenshots.length > 0){
 			await createGif('neuquant')
