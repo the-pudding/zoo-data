@@ -317,7 +317,7 @@ async function makeZoo(cam){
 			await writeData()
 		}
 
-		await browser.close()
+		if (browser) await browser.close()
 		
 	}
 
@@ -343,13 +343,19 @@ async function makeZoo(cam){
 async function runBatches(){
 	// run the script in batches
 
-	for (let i = 0; i < 2; i += 1){
-		const finished = webcams.slice(i, i + 2).map(async cam =>  makeZoo(cam))
-		console.log(finished)
+	try {
+		for (let i = 0; i < 2; i += 1){
+			const finished = webcams.slice(i, i + 2).map(async cam =>  makeZoo(cam))
+			console.log(finished)
 
-		await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
+			await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
 		
+		}	
 	}
+	catch (err){
+		console.error(err)
+	}
+	
 }
 
 
