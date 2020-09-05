@@ -47,7 +47,7 @@ async function makeZoo(cam){
 
 	async function createGif(algorithm) {
 		const {id} = cam
-		return new Promise(async resolve1 => {
+		return new Promise(async (resolve1, reject) => {
 		//  there will always be the same range of image number files
 		// so just iterate and create an array of numbers
 			console.log(`Creating ${id} gif`)
@@ -73,8 +73,10 @@ async function makeZoo(cam){
 			encoder.setDelay(200)
 
 			async function processImage(file){
-				await new Promise(resolveProc => {
+				console.log(`processing image ${id}`)
+				await new Promise((resolveProc, reject) => {
 					const image = new Image()
+
 					image.onload = () => {
 						ctx.drawImage(image, 0, 0, width, height, // source dimensions
 							0, 0, canvasWidth, canvasHeight)
@@ -86,6 +88,11 @@ async function makeZoo(cam){
 						resolveProc()
 				
 					}
+
+					image.onerror = () => {
+						console.log('load error')
+						reject()
+					}
 					image.src = `data:image/png;base64,${file.str}`
 
 				}).catch((e) => console.error(e))
@@ -93,32 +100,38 @@ async function makeZoo(cam){
 
 
 		  async function orderImages(){
+				console.log(`ordering image ${id}`)
+				console.log({len: allScreenshots.length})
 			
-			  for (const file of allScreenshots){
-					await processImage(file)
+				// only process is 15 screenshots were actually taken
+				if (allScreenshots.length === frameCount){
+					for (const file of allScreenshots){
+						await processImage(file)
 			  }
 
-				encoder.finish()
-				const buffer = encoder.out.getData()
+					encoder.finish()
+					const buffer = encoder.out.getData()
 
-				const req = client.put(`${filePathGIF}/${id}.gif`, {
-					'Content-Type': 'image/gif',
-				})
+					const req = client.put(`${filePathGIF}/${id}.gif`, {
+						'Content-Type': 'image/gif',
+					})
 
-				req.on('response', (res) => {
-					if (res.statusCode === 200){
-						console.log('saved to %s', req.url)
-					
-						resolve1()
-						allScreenshots = []
-					} 
-				})
+					req.on('response', (res) => {
+						if (res.statusCode === 200){
+							console.log('saved to %s', req.url)
+							resolve1()
+							allScreenshots = []
+						} else {
+							console.log(`Status: ${res.statusCode}`)
+							reject()
+						}
+					})
 
-				req.on('error', e => console.error(e))
+					req.on('error', e => console.error(e))
 
-				req.end(buffer)
-			
-			 
+					req.end(buffer)
+				}
+			  
 		  }
 
 		  await orderImages()
@@ -233,8 +246,8 @@ async function makeZoo(cam){
 			await page.goto(url).catch((e) => {console.error(e)})
 			// await page.waitForLoadState({ waitUntil: 'domcontentloaded' }).catch((e) => {console.error(e)})
 
-			const full = await page.screenshot()
-			await sendToS3(full)
+			// const full = await page.screenshot()
+			// await sendToS3(full)
 
 			// if there's a play button, click it
 			if (play) {
@@ -266,7 +279,7 @@ async function makeZoo(cam){
 
 				// check again
 				paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(e)})
-				console.log(paused)
+				// console.log(paused)
 				
 				
 				await takeScreenshots(element)
@@ -344,8 +357,8 @@ async function runBatches(){
 	// run the script in batches
 
 	try {
-		for (let i = 10; i < 13; i += 1){
-			const finished = webcams.slice(i, i + 2).map(async cam =>  makeZoo(cam))
+		for (let i = 0; i < webcams.length; i += 5){
+			const finished = webcams.slice(i, i + 5).map(async cam =>  makeZoo(cam))
 			console.log(finished)
 
 			await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
