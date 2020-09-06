@@ -186,6 +186,7 @@ async function makeZoo(cam){
 
 	async function takeScreenshots(element){
 		await new Promise(async (resolveSS) => {
+			console.log('take screenshots function')
 			const {id} = cam			
 			
 			// save only the first image to AWS
@@ -193,7 +194,7 @@ async function makeZoo(cam){
 				videoDimensions =  await element.evaluate(() => ({
 					width: document.documentElement.clientWidth,
 					height: document.documentElement.clientHeight
-				})).catch(e => console.error(e))
+				})).catch(e => console.error(`save first error: ${e}`))
 
 				await sendToS3(ss)
 			}
@@ -202,7 +203,7 @@ async function makeZoo(cam){
 	
 				// eslint-disable-next-line no-await-in-loop
 				const ss = await element.screenshot({path: ''}).catch((e) => {
-					console.error(e); 
+					console.error(`error in playwright screenshot: ${e}`); 
 					return('') })
 
 				const str = ss.toString('base64')
@@ -221,7 +222,7 @@ async function makeZoo(cam){
 			// then resolve this promise to continue to gif-making
 			resolveSS()
 
-		}).catch((e) => console.error(e))
+		}).catch((e) => console.error(`take screenshots error: ${e}`))
 	
 	}
 
@@ -242,7 +243,7 @@ async function makeZoo(cam){
 			console.log(`Preparing ${id} for screenshot`)
 
 			// navigate to URL
-			await page.goto(url).catch((e) => {console.error(e)})
+			await page.goto(url).catch((e) => {console.error(`error navigating to page: ${e}`)})
 			// await page.waitForLoadState({ waitUntil: 'domcontentloaded' }).catch((e) => {console.error(e)})
 
 			// const full = await page.screenshot()
@@ -252,15 +253,15 @@ async function makeZoo(cam){
 			if (play) {
 				const buttons = play.split(', ')
 				buttons.forEach(async d => {
-					await page.click(`${d}`).catch((e) => console.error(e))
+					await page.click(`${d}`).catch((e) => console.error(`error looking for play buttons: ${e}`))
 				})
 			}
 
 
 			// wait for video
-			await page.waitForSelector('video').catch((e) => {console.error(e)})
+			await page.waitForSelector('video').catch((e) => {console.error(`error waiting for video: ${e}`)})
 
-			element = await page.$('video').catch((e) => {console.error(e)})
+			element = await page.$('video').catch((e) => {console.error(`error creating element: ${e}`)})
 
 			if (element){
 				// after video has loaded, then record data
@@ -268,16 +269,16 @@ async function makeZoo(cam){
 		
 				await timeout(5000)
 				// find out if video is paused
-				let paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(e)})
+				let paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(`error evaluating paused status: ${e}`)})
 
 				// if it's still paused, click the page and wait 10 seconds before checking again
 				if (paused === true) {
-					await page.click('body').catch((e) => {console.error(e)})	
+					await page.click('body').catch((e) => {console.error(`error clicking body: ${e}`)})	
 					await timeout(10000)
 				}
 
 				// check again
-				paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(e)})
+				paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(`error checking pause again: ${e}`)})
 				// console.log(paused)
 				
 				
@@ -287,7 +288,7 @@ async function makeZoo(cam){
 			}
 	
 		} catch (err) {
-			console.log(err)
+			console.log(`Error in screenshot function: ${err}`)
 		}
 
 		
