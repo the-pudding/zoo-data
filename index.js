@@ -227,13 +227,12 @@ async function makeZoo(cam){
 
 
 	async function screenshot() {
+		console.log('in screenshot function')
 		
 
 		let element = null
 
 		try {
-		
-
 			// launch a single page 
 			page = await browser.newPage()
 			// set a timeout for the page of 10 seconds
