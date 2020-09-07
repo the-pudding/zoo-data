@@ -240,7 +240,7 @@ async function makeZoo(cam){
 				'--disable-setuid-sandbox',
 				'--disable-dev-shm-usage',
 				'--single-process'] }).catch(e => console.error(`error launching browser: ${e}`))
-			console.log(browser)
+		
 			// launch a single page 
 			page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
 			// set a timeout for the page of 10 seconds
@@ -337,7 +337,7 @@ async function makeZoo(cam){
 			await writeData()
 		}
 
-		if (browser) await browser.close()
+		// if (browser) await browser.close()
 		
 	}
 
@@ -364,7 +364,7 @@ async function runBatches(){
 	// run the script in batches
 
 	try {
-		for (let i = 0; i < webcams.length; i += 5){
+		for (let i = 0; i < 5; i += 5){
 			const finished = webcams.slice(i, i + 5).map(async cam =>  makeZoo(cam))
 			console.log(finished)
 
