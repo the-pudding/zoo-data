@@ -18,6 +18,10 @@ const filePathGIF = 'zoo-cams/output'
 const frameCount = 15
 const frameRange = [...Array(frameCount).keys()]
 
+const http = require('http')
+
+http.createServer(onRequest).listen(process.env.PORT || 6000)
+
 
 
 const {AWS_KEY, AWS_KEY_SECRET, AWS_BUCKET} = process.env
@@ -236,7 +240,10 @@ async function makeZoo(cam){
 		try {
 
 			// launch browser
-			browser = await firefox.launch({headless: true,  args: ['--no-sandbox', '--disable-setuid-sandbox'] }).catch(e => console.error(`error launching browser: ${e}`))
+			browser = await firefox.launch({headless: true,  args: ['--no-sandbox', 
+				'--disable-setuid-sandbox',
+				'--disable-dev-shm-usage',
+				'--single-process'] }).catch(e => console.error(`error launching browser: ${e}`))
 			console.log(browser)
 			// launch a single page 
 			page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
