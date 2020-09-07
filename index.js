@@ -9,6 +9,7 @@ const {createCanvas, Image} = require('canvas')
 const fs = require('fs')
 const knox = require('knox')
 const d3 = require('d3-dsv')
+const ffmpeg = require('ffmpeg')
 
 const dataName = 'gifs.json'
 const data = []
@@ -364,7 +365,7 @@ async function runBatches(){
 	// run the script in batches
 
 	try {
-		for (let i = 0; i < 5; i += 1){
+		for (let i = 10; i < 13; i += 1){
 			const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
 			console.log(finished)
 
