@@ -18,10 +18,6 @@ const filePathGIF = 'zoo-cams/output'
 const frameCount = 15
 const frameRange = [...Array(frameCount).keys()]
 
-const http = require('http')
-
-http.createServer(onRequest).listen(process.env.PORT || 6000)
-
 
 
 const {AWS_KEY, AWS_KEY_SECRET, AWS_BUCKET} = process.env
