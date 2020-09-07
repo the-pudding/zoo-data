@@ -43,7 +43,7 @@ async function makeZoo(cam){
 		height: 0
 	}
 	
-	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox', '--disable-setuid-sandbox'] }).catch(e => console.error(`error launching browser: ${e}`))
+	let browser = null
 
 	async function createGif(algorithm) {
 		const {id} = cam
@@ -234,6 +234,10 @@ async function makeZoo(cam){
 		let element = null
 
 		try {
+
+			// launch browser
+			browser = await firefox.launch({headless: true,  args: ['--no-sandbox', '--disable-setuid-sandbox'] }).catch(e => console.error(`error launching browser: ${e}`))
+			console.log(browser)
 			// launch a single page 
 			page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
 			// set a timeout for the page of 10 seconds
