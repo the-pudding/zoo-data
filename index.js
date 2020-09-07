@@ -337,7 +337,7 @@ async function makeZoo(cam){
 			await writeData()
 		}
 
-		// if (browser) await browser.close()
+		if (browser) await browser.close()
 		
 	}
 
