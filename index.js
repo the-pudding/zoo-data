@@ -227,6 +227,39 @@ async function makeZoo(cam){
 	
 	}
 
+	async function pageSS(element){
+		await new Promise(async (resolveSS) => {
+			console.log('take screenshots function')
+			const {id} = cam			
+			
+			// save only the first image to AWS
+			async function saveFirst(ss){
+				videoDimensions =  await element.evaluate(() => ({
+					width: document.documentElement.clientWidth,
+					height: document.documentElement.clientHeight
+				})).catch(e => console.error(`save first error: ${e}`))
+
+				await sendToS3(ss)
+			}
+			// eslint-disable-next-line no-restricted-syntax
+			for (const frame of frameRange){
+	
+				// eslint-disable-next-line no-await-in-loop
+				const ss = await element.screenshot({path: ''}).catch((e) => {
+					console.error(`error in playwright screenshot: ${e}`); 
+					return('') })
+
+				const str = ss.toString('base64')
+				
+				await saveFirst(ss)
+			}
+ 
+			// then resolve this promise to continue to gif-making
+			resolveSS()
+
+		}).catch((e) => console.error(`take screenshots error: ${e}`))
+	
+	}
 
 	async function screenshot() {
 		console.log('in screenshot function')
@@ -296,10 +329,17 @@ async function makeZoo(cam){
 
 				// check again
 				paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(`error checking pause again: ${e}`)})
-				console.log({paused})
+				
+				if (paused === false){
+					await takeScreenshots(element)
+					console.log('actually playing!!')
+				}
+				else {
+					await pageSS(element)
+					console.log('still paused - capturing whole page')
+				}
 				
 				
-				await takeScreenshots(element)
 				
 				
 			}
