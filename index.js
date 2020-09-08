@@ -241,8 +241,10 @@ async function makeZoo(cam){
 				'--disable-setuid-sandbox',
 				'--disable-dev-shm-usage',
 				'--single-process'],
-			firefoxUserPrefs:['media.gmp-manager.updateEnabled'] }).catch(e => console.error(`error launching browser: ${e}`))
+			firefoxUserPrefs:{'media.gmp-manager.updateEnabled': true}}).catch(e => console.error(`error launching browser: ${e}`))
 		
+			await browserContext.addCookies([{}])
+	
 			// launch a single page 
 			page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
 			// set a timeout for the page of 10 seconds
