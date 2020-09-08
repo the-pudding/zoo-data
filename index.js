@@ -240,7 +240,8 @@ async function makeZoo(cam){
 			browser = await firefox.launch({headless: true,  args: ['--no-sandbox', 
 				'--disable-setuid-sandbox',
 				'--disable-dev-shm-usage',
-				'--single-process'] }).catch(e => console.error(`error launching browser: ${e}`))
+				'--single-process'],
+			firefoxUserPrefs:['media.gmp-manager.updateEnabled'] }).catch(e => console.error(`error launching browser: ${e}`))
 		
 			// launch a single page 
 			page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
