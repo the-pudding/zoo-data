@@ -278,7 +278,7 @@ async function makeZoo(cam){
 				await timeout(5000)
 				// find out if video is paused
 				let paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(`error evaluating paused status: ${e}`)})
-
+				console.log({firstPause: paused})
 				// if it's still paused, click the page and wait 10 seconds before checking again
 				if (paused === true) {
 					await page.click('body').catch((e) => {console.error(`error clicking body: ${e}`)})	
@@ -287,7 +287,7 @@ async function makeZoo(cam){
 
 				// check again
 				paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(`error checking pause again: ${e}`)})
-				console.log(paused)
+				console.log({paused})
 				
 				
 				await takeScreenshots(element)
