@@ -243,7 +243,6 @@ async function makeZoo(cam){
 				'--single-process'],
 			firefoxUserPrefs:{'media.gmp-manager.updateEnabled': true}}).catch(e => console.error(`error launching browser: ${e}`))
 		
-			await browserContext.addCookies([{}])
 	
 			// launch a single page 
 			page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
