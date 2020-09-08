@@ -241,8 +241,11 @@ async function makeZoo(cam){
 				'--disable-setuid-sandbox',
 				'--disable-dev-shm-usage',
 				'--single-process'],
-			firefoxUserPrefs:{'media.gmp-manager.updateEnabled': true}}).catch(e => console.error(`error launching browser: ${e}`))
+			firefoxUserPrefs:{'media.gmp-manager.updateEnabled': true, 'media.autoplay.default': 0, 'media.autoplay.allow-extension-background-pages': true,
+				'media.autoplay.block-event.enabled': false, 'media.autoplay.enabled.user-gestures-needed': false,
+				'media.autoplay.blocking_policy':0}}).catch(e => console.error(`error launching browser: ${e}`))
 		
+			console.log({browser})
 	
 			// launch a single page 
 			page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
