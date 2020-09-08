@@ -227,20 +227,13 @@ async function makeZoo(cam){
 	
 	}
 
-	async function pageSS(page){
+	async function pageSS(){
 		await new Promise(async (resolveSS) => {
 			console.log('take screenshots function')
 			const {id} = cam			
 			
 			// save only the first image to AWS
-			async function saveFirst(ss){
-				videoDimensions =  await element.evaluate(() => ({
-					width: document.documentElement.clientWidth,
-					height: document.documentElement.clientHeight
-				})).catch(e => console.error(`save first error: ${e}`))
-
-				await sendToS3(ss)
-			}
+			
 			// eslint-disable-next-line no-restricted-syntax
 	
 			// eslint-disable-next-line no-await-in-loop
@@ -248,9 +241,8 @@ async function makeZoo(cam){
 				console.error(`error in playwright screenshot: ${e}`); 
 				return('') })
 
-			const str = ss.toString('base64')
 				
-			await saveFirst(ss)
+			await sendToS3(ss)
 		
  
 			// then resolve this promise to continue to gif-making
