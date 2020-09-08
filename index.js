@@ -227,7 +227,7 @@ async function makeZoo(cam){
 	
 	}
 
-	async function pageSS(element){
+	async function pageSS(page){
 		await new Promise(async (resolveSS) => {
 			console.log('take screenshots function')
 			const {id} = cam			
@@ -242,17 +242,16 @@ async function makeZoo(cam){
 				await sendToS3(ss)
 			}
 			// eslint-disable-next-line no-restricted-syntax
-			for (const frame of frameRange){
 	
-				// eslint-disable-next-line no-await-in-loop
-				const ss = await element.screenshot({path: ''}).catch((e) => {
-					console.error(`error in playwright screenshot: ${e}`); 
-					return('') })
+			// eslint-disable-next-line no-await-in-loop
+			const ss = await page.screenshot({path: ''}).catch((e) => {
+				console.error(`error in playwright screenshot: ${e}`); 
+				return('') })
 
-				const str = ss.toString('base64')
+			const str = ss.toString('base64')
 				
-				await saveFirst(ss)
-			}
+			await saveFirst(ss)
+		
  
 			// then resolve this promise to continue to gif-making
 			resolveSS()
@@ -335,7 +334,7 @@ async function makeZoo(cam){
 					console.log('actually playing!!')
 				}
 				else {
-					await pageSS(element)
+					await pageSS(page)
 					console.log('still paused - capturing whole page')
 				}
 				
