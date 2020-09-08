@@ -287,7 +287,7 @@ async function makeZoo(cam){
 
 				// check again
 				paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(`error checking pause again: ${e}`)})
-				// console.log(paused)
+				console.log(paused)
 				
 				
 				await takeScreenshots(element)
