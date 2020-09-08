@@ -276,6 +276,10 @@ async function makeZoo(cam){
 				await collectData(cam) 
 		
 				await timeout(5000)
+
+				page.on('console', async message => {
+					console.log({message})
+				})
 				// find out if video is paused
 				let paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(`error evaluating paused status: ${e}`)})
 				console.log({firstPause: paused})
