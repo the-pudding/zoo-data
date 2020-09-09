@@ -9,9 +9,7 @@ const {createCanvas, Image} = require('canvas')
 const fs = require('fs')
 const knox = require('knox')
 const d3 = require('d3-dsv')
-const ffmpeg = require('ffmpeg')
 
-console.log(ffmpeg)
 const dataName = 'gifs.json'
 const data = []
 
