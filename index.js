@@ -28,23 +28,19 @@ const client = knox.createClient({
 	bucket: AWS_BUCKET
 })
 
-
-
-
 const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
-const sample = webcams.slice(0, 7)
 
 async function makeZoo(cam){
 	// these variables need to remain unique for each video
 	let allScreenshots = []
-	let page = null
 	let videoDimensions = {
 		width: 0,
 		height: 0
 	}
-	
-	let browser = null
 
+	// launch browser
+	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox']}).catch(e => console.error(`error launching browser: ${e}`))
+	
 	async function createGif(algorithm) {
 		const {id} = cam
 		return new Promise(async (resolve1, reject) => {
@@ -222,47 +218,13 @@ async function makeZoo(cam){
 	
 	}
 
-	async function pageSS(){
-		await new Promise(async (resolveSS) => {
-			const {id} = cam			
-			
-			// save only the first image to AWS
-			
-			// eslint-disable-next-line no-restricted-syntax
-	
-			// eslint-disable-next-line no-await-in-loop
-			const ss = await page.screenshot({path: ''}).catch((e) => {
-				console.error(`error in playwright screenshot: ${e}`); 
-				return('') })
 
-				
-			await sendToS3(ss)
-		
- 
-			// then resolve this promise to continue to gif-making
-			resolveSS()
-
-		}).catch((e) => console.error(`take screenshots error: ${e}`))
-	
-	}
-
-	async function screenshot() {
+	async function screenshot(page) {
 
 		let element = null
 
 		try {
 
-			// launch browser
-			browser = await firefox.launch({headless: true,  args: ['--no-sandbox', 
-				'--disable-setuid-sandbox',
-				'--disable-dev-shm-usage',
-				'--single-process'],
-			firefoxUserPrefs:{'media.gmp-manager.updateEnabled': true, 'media.autoplay.default': 0, 'media.autoplay.allow-extension-background-pages': true,
-				'media.autoplay.block-event.enabled': false, 'media.autoplay.enabled.user-gestures-needed': false,
-				'media.autoplay.blocking_policy':0}}).catch(e => console.error(`error launching browser: ${e}`))
-	
-			// launch a single page 
-			page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
 			// set a timeout for the page of 10 seconds
 			page.setDefaultTimeout(15000)
 
@@ -342,7 +304,9 @@ async function makeZoo(cam){
 
 	async function getZoos(){
 		// await loopThroughCams(sample)
-		await screenshot()
+		// launch a single page 
+		const page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
+		await screenshot(page)
 		// await takeScreenshots(vidElement)
 		if (allScreenshots.length > 0){
 			await createGif('neuquant')
@@ -350,35 +314,21 @@ async function makeZoo(cam){
 			await writeData()
 		}
 
-		if (browser) await browser.close()
+		await browser.close()
 		
 	}
 
 	await getZoos()
 }
 
-// run the script in parallel
-// async function setup(group, cb){
-
-// 	// iterate over script in parallel, saving the promises
-// 	const finished = group.map(cam => new Promise(async (resolve) => {
-// 		await makeZoo(cam)
-// 		resolve()
-// 		cb()
-// 	}).catch(e => console.error(e))
-	
-// 	)
-
-// 	return finished
-	
-// }
 
 async function runBatches(){
 	// run the script in batches
 
 	try {
-		for (let i = 0; i < 12; i += 1){
-			const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
+		for (let i = 0; i < 6; i += 3){
+			
+			const finished = webcams.slice(i, i + 3).map(async cam =>  makeZoo(cam))
 
 			await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
 		
@@ -392,10 +342,3 @@ async function runBatches(){
 
 
 runBatches()
-
-// setup()
-
-// sample.forEach(async cam => {
-// 	await makeZoo(cam)
-// })
-// createGif('neuquant', 6)
