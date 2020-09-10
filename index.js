@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
-process.env.DEBUG='pw:api'
+// process.env.DEBUG='pw:api'
 
 const { firefox } = require('playwright-firefox');
 const GIFEncoder = require('gif-encoder-2')
@@ -73,7 +73,6 @@ async function makeZoo(cam){
 			encoder.setDelay(200)
 
 			async function processImage(file){
-				console.log(`processing image ${id}`)
 				await new Promise((resolveProc, reject) => {
 					const image = new Image()
 
@@ -100,9 +99,7 @@ async function makeZoo(cam){
 
 
 		  async function orderImages(){
-				console.log(`ordering image ${id}`)
-				console.log({len: allScreenshots.length})
-			
+
 				// only process is 15 screenshots were actually taken
 				if (allScreenshots.length === frameCount){
 					for (const file of allScreenshots){
@@ -186,7 +183,6 @@ async function makeZoo(cam){
 
 	async function takeScreenshots(element){
 		await new Promise(async (resolveSS) => {
-			console.log('take screenshots function')
 			const {id} = cam			
 			
 			// save only the first image to AWS
@@ -228,7 +224,6 @@ async function makeZoo(cam){
 
 	async function pageSS(){
 		await new Promise(async (resolveSS) => {
-			console.log('take screenshots function')
 			const {id} = cam			
 			
 			// save only the first image to AWS
@@ -252,8 +247,6 @@ async function makeZoo(cam){
 	}
 
 	async function screenshot() {
-		console.log('in screenshot function')
-		
 
 		let element = null
 
@@ -267,8 +260,6 @@ async function makeZoo(cam){
 			firefoxUserPrefs:{'media.gmp-manager.updateEnabled': true, 'media.autoplay.default': 0, 'media.autoplay.allow-extension-background-pages': true,
 				'media.autoplay.block-event.enabled': false, 'media.autoplay.enabled.user-gestures-needed': false,
 				'media.autoplay.blocking_policy':0}}).catch(e => console.error(`error launching browser: ${e}`))
-		
-			console.log({browser})
 	
 			// launch a single page 
 			page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
@@ -308,29 +299,11 @@ async function makeZoo(cam){
 				page.on('console', async message => {
 					console.log({message})
 				})
-				// find out if video is paused
-				let paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(`error evaluating paused status: ${e}`)})
-				console.log({firstPause: paused})
-				// if it's still paused, click the page and wait 10 seconds before checking again
-				if (paused === true) {
-					await page.click('body').catch((e) => {console.error(`error clicking body: ${e}`)})	
-					await timeout(10000)
-				}
+				
+				await page.$eval('video', el => el.play()).catch(e => console.error(`error playing video: ${e}`))
+				await page.waitForTimeout(5000)
+				await takeScreenshots(element)
 
-				// check again
-				paused = await element.evaluate(vid => vid.paused).catch((e) => {console.error(`error checking pause again: ${e}`)})
-				
-				if (paused === false){
-					await takeScreenshots(element)
-					console.log('actually playing!!')
-				}
-				else {
-					await pageSS(page)
-					console.log('still paused - capturing whole page')
-				}
-				
-				
-				
 				
 			}
 	
@@ -404,9 +377,8 @@ async function runBatches(){
 	// run the script in batches
 
 	try {
-		for (let i = 0; i < 3; i += 1){
-			const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
-			console.log(finished)
+		for (let i = 0; i < 12; i += 3){
+			const finished = webcams.slice(i, i + 3).map(async cam =>  makeZoo(cam))
 
 			await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
 		
