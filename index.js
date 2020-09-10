@@ -377,8 +377,8 @@ async function runBatches(){
 	// run the script in batches
 
 	try {
-		for (let i = 0; i < 12; i += 2){
-			const finished = webcams.slice(i, i + 2).map(async cam =>  makeZoo(cam))
+		for (let i = 0; i < 12; i += 1){
+			const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
 
 			await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
 		
