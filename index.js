@@ -298,7 +298,7 @@ async function runBatches(){
 	// run the script in batches
 
 	try {
-		for (let i = 0; i < 5; i += 1){
+		for (let i = 5; i < 15; i += 1){
 			
 			const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
 
