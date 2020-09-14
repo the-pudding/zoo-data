@@ -123,18 +123,18 @@ async function makeZoo(cam){
 					})
 
 					req.on('error', e => console.error(e))
-
-					req.end(buffer)
-
 					req.on('socket', (s) => {
 						s.setTimeout(15000, () => { reject()})
 					})
+					req.end(buffer)
+
+					
 				}
 			  
 		  }
 
 		  await orderImages()
-		  await collectGarbage()
+		  // await collectGarbage()
 		
 		})
 	
@@ -170,7 +170,7 @@ async function makeZoo(cam){
 			req.on('response', (res) => {
 				if (res.statusCode === 200){
 					console.log('saved to %s', req.url)
-					resolve(res)
+					resolve()
 			
 					return res.statusCode
 				} return null
