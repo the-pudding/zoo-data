@@ -127,7 +127,7 @@ async function makeZoo(cam){
 					req.end(buffer)
 
 					req.on('socket', (s) => {
-						s.setTimeout(15000, () => { s.destroy( )})
+						s.setTimeout(15000, () => { reject()})
 					})
 				}
 			  
