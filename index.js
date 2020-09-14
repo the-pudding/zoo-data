@@ -39,6 +39,10 @@ async function makeZoo(cam){
 	// launch browser
 	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox']}).catch(e => console.error(`error launching browser: ${e}`))
 	
+	async function collectGarbage(){
+		allScreenshots = []
+	}
+
 	async function createGif(algorithm) {
 		const {id} = cam
 		return new Promise(async (resolve1, reject) => {
@@ -126,6 +130,7 @@ async function makeZoo(cam){
 		  }
 
 		  await orderImages()
+		  await collectGarbage()
 		
 		})
 	
