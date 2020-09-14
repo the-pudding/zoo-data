@@ -281,14 +281,12 @@ async function makeZoo(cam){
 		// launch a single page 
 		const page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
 		await screenshot(page)
+		// close browser after screenshots are taken
+		await browser.close()
 		// await takeScreenshots(vidElement)
 		if (allScreenshots.length > 0){
 			await createGif('neuquant')
-		
-			// await writeData()
 		}
-
-		await browser.close()
 		
 	}
 
