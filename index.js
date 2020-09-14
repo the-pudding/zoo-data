@@ -125,6 +125,10 @@ async function makeZoo(cam){
 					req.on('error', e => console.error(e))
 
 					req.end(buffer)
+
+					req.on('socket', (s) => {
+						s.setTimeout(15000, () => { s.destroy( )})
+					})
 				}
 			  
 		  }
@@ -303,7 +307,7 @@ async function runBatches(){
 	// run the script in batches
 
 	try {
-		for (let i = 5; i < 15; i += 1){
+		for (let i = 5; i < 8; i += 1){
 			
 			const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
 
