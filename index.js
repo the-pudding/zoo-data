@@ -37,11 +37,7 @@ async function makeZoo(cam){
 	}
 
 	// launch browser
-	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox']}).catch(e => console.error(`error launching browser: ${e}`))
-	
-	async function collectGarbage(){
-		allScreenshots = []
-	}
+	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox', '-width=750', '-height=500']}).catch(e => console.error(`error launching browser: ${e}`))
 
 	async function createGif(algorithm) {
 		const {id} = cam
