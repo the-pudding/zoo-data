@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
@@ -9,9 +10,6 @@ const {createCanvas, Image} = require('canvas')
 const fs = require('fs')
 const knox = require('knox')
 const d3 = require('d3-dsv')
-
-const dataName = 'gifs.json'
-const data = []
 
 const filePathImages = 'zoo-cams/stills'
 const filePathGIF = 'zoo-cams/output'
@@ -69,7 +67,7 @@ async function makeZoo(cam){
 			encoder.setDelay(200)
 
 			async function processImage(file){
-				await new Promise((resolveProc, reject) => {
+				await new Promise((resolveProc, rejectProc) => {
 					const image = new Image()
 
 					image.onload = () => {
@@ -86,7 +84,7 @@ async function makeZoo(cam){
 
 					image.onerror = () => {
 						console.log('load error')
-						reject()
+						rejectProc()
 					}
 					image.src = `data:image/png;base64,${file.str}`
 
@@ -134,14 +132,14 @@ async function makeZoo(cam){
 	}
 
 
-	async function collectData(){
-		const timestamp = Date.now()
-		cam.timestamp = timestamp
+	// async function collectData(){
+	// 	const timestamp = Date.now()
+	// 	cam.timestamp = timestamp
 
-		const string = JSON.stringify(cam)
+	// 	const string = JSON.stringify(cam)
 
-		data.push(string)
-	}
+	// 	data.push(string)
+	// }
 
 	function timeout(ms){
 		return new Promise(resolve => setTimeout(resolve, ms)).catch(e => console.error(e))
@@ -166,7 +164,7 @@ async function makeZoo(cam){
 					resolve(res)
 			
 					return res.statusCode
-				}
+				} return null
 			})
 
 			req.on('error', e => console.error(e))
@@ -254,7 +252,7 @@ async function makeZoo(cam){
 
 			if (element){
 				// after video has loaded, then record data
-				await collectData(cam) 
+				// await collectData(cam) 
 		
 				await timeout(5000)
 
@@ -277,30 +275,6 @@ async function makeZoo(cam){
 	
 	}
 
-	async function writeData(){
-		fs.writeFile(dataName, data, err => {
-			if (err) return console.error('File write error:', err)
-		})
-	}
-
-	// async function loopThroughCams(sample){
-
-	// 	return new Promise(async resolve => {
-	// 		for (const [index, cam] of sample.entries()){
-	// 			console.log({index, cam})
-	// 			const vidElement = await screenshot(cam)
-	// 			await takeScreenshots(vidElement, cam.id)
-	// 			await createGif('neuquant', cam.id)
-
-	// 			if (index === sample.length - 1) {
-	// 				resolve()
-	// 			}
-			
-	// 		}
-
-	// 	})
-	
-	// }
 
 	async function getZoos(){
 		// await loopThroughCams(sample)
@@ -311,7 +285,7 @@ async function makeZoo(cam){
 		if (allScreenshots.length > 0){
 			await createGif('neuquant')
 		
-			await writeData()
+			// await writeData()
 		}
 
 		await browser.close()
@@ -326,7 +300,7 @@ async function runBatches(){
 	// run the script in batches
 
 	try {
-		for (let i = 0; i < 50; i += 1){
+		for (let i = 0; i < 5; i += 1){
 			
 			const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
 
