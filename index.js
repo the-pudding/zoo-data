@@ -31,26 +31,25 @@ const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
 async function makeZoo(cam){
 	// these variables need to remain unique for each video
 	let allScreenshots = []
-	let videoDimensions = {
-		width: 0,
-		height: 0
-	}
 
 	// launch browser
 	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox', '-width=750', '-height=500']}).catch(e => console.error(`error launching browser: ${e}`))
 
 	async function createGif(algorithm) {
 		const {id} = cam
-		return new Promise(async (resolve1, reject) => {
-		//  there will always be the same range of image number files
-		// so just iterate and create an array of numbers
+		return new Promise(async (resolve1, rejectGif) => {
 			console.log(`Creating ${id} gif`)
   
-			const [width, height] = await new Promise((resolve2) => {
+			const [width, height] = await new Promise((resolve2, rejectFile) => {
 
 			// get the file and metadata from s3 without loading it
 				client.getFile(`${filePathImages}/${id}.png`, (err, res) => {
-					resolve2([res.headers['x-amz-meta-width'], res.headers['x-amz-meta-height']])
+					if (err) {
+						rejectFile()
+						rejectGif()
+						console.error(err)
+					}
+					else resolve2([res.headers['x-amz-meta-width'], res.headers['x-amz-meta-height']])
 				})
 
 			}).catch(e => console.error(e))
@@ -58,10 +57,9 @@ async function makeZoo(cam){
 			const canvasWidth = 500
 			const canvasHeight = 281
 		
-  
-			const encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
+			let encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
 	
-			const canvas = createCanvas(canvasWidth, canvasHeight)
+			let canvas = createCanvas(canvasWidth, canvasHeight)
 			const ctx = canvas.getContext('2d')
 			encoder.start()
 			encoder.setDelay(200)
@@ -75,11 +73,9 @@ async function makeZoo(cam){
 							0, 0, canvasWidth, canvasHeight)
 
 						ctx.getImageData(0, 0, width, height)
-					
 
 						encoder.addFrame(ctx)
 						resolveProc()
-				
 					}
 
 					image.onerror = () => {
@@ -94,38 +90,37 @@ async function makeZoo(cam){
 
 		  async function orderImages(){
 
-				// only process is 15 screenshots were actually taken
-				if (allScreenshots.length === frameCount){
-					for (const file of allScreenshots){
-						await processImage(file)
+				for (const file of allScreenshots){
+					await processImage(file)
 			  }
 
-					encoder.finish()
-					const buffer = encoder.out.getData()
+				encoder.finish()
+				const buffer = encoder.out.getData()
 
-					const req = client.put(`${filePathGIF}/${id}.gif`, {
-						'Content-Type': 'image/gif',
-					})
+				const req = client.put(`${filePathGIF}/${id}.gif`, {
+					'Content-Type': 'image/gif',
+				})
 
-					req.on('response', (res) => {
-						if (res.statusCode === 200){
-							console.log('saved to %s', req.url)
-							resolve1()
-							allScreenshots = []
-						} else {
-							console.log(`Status: ${res.statusCode}`)
-							reject()
-						}
-					})
+				req.on('response', (res) => {
+					if (res.statusCode === 200){
+						console.log('saved to %s', req.url)
+						resolve1()
+						allScreenshots = []
+					} else {
+						console.log(`Status: ${res.statusCode}`)
+						rejectGif()
+					}
+				})
 
-					req.on('error', e => console.error(e))
-					// req.on('socket', (s) => {
-					// 	s.setTimeout(15000, () => { reject()})
-					// })
-					req.end(buffer)
+				req.on('error', e => {console.error(`Error in saving gif: ${e}`)
+					rejectGif()})
 
-					
-				}
+				req.end(buffer)
+
+				// set back to nothing for garbage collecting
+				encoder = null
+				canvas = null
+
 			  
 		  }
 
@@ -137,21 +132,12 @@ async function makeZoo(cam){
 	}
 
 
-	// async function collectData(){
-	// 	const timestamp = Date.now()
-	// 	cam.timestamp = timestamp
-
-	// 	const string = JSON.stringify(cam)
-
-	// 	data.push(string)
-	// }
-
 	function timeout(ms){
 		return new Promise(resolve => setTimeout(resolve, ms)).catch(e => console.error(e))
 	}
 
 
-	async function sendToS3(ss){
+	async function sendToS3(ss, videoDimensions){
 
 		const {id} = cam
 
@@ -169,10 +155,16 @@ async function makeZoo(cam){
 					resolve()
 			
 					return res.statusCode
-				} return null
+				} 
+				console.error(`Error sending to s3: ${res.statusCode}`)
+				reject()
+				return null
 			})
 
-			req.on('error', e => console.error(e))
+			req.on('error', e => {
+				reject(e)
+				console.error(e)
+			})
 
 			req.end(ss)
 		})
@@ -186,12 +178,13 @@ async function makeZoo(cam){
 			
 			// save only the first image to AWS
 			async function saveFirst(ss){
-				videoDimensions =  await element.evaluate(() => ({
+
+				const videoDimensions = await element.evaluate(() => ({
 					width: document.documentElement.clientWidth,
 					height: document.documentElement.clientHeight
 				})).catch(e => console.error(`save first error: ${e}`))
 
-				await sendToS3(ss)
+				await sendToS3(ss, videoDimensions)
 			}
 			// eslint-disable-next-line no-restricted-syntax
 			for (const frame of frameRange){
@@ -236,10 +229,6 @@ async function makeZoo(cam){
 
 			// navigate to URL
 			await page.goto(url).catch((e) => {console.error(`error navigating to page: ${e}`)})
-			// await page.waitForLoadState({ waitUntil: 'domcontentloaded' }).catch((e) => {console.error(e)})
-
-			// const full = await page.screenshot()
-			// await sendToS3(full)
 
 			// if there's a play button, click it
 			if (play) {
@@ -249,18 +238,12 @@ async function makeZoo(cam){
 				})
 			}
 
-
 			// wait for video
-			await page.waitForSelector('video').catch((e) => {console.error(`error waiting for video: ${e}`)})
+			// await page.waitForSelector('video').catch((e) => {console.error(`error waiting for video: ${e}`)})
 
 			element = await page.$('video').catch((e) => {console.error(`error creating element: ${e}`)})
 
 			if (element){
-				// after video has loaded, then record data
-				// await collectData(cam) 
-		
-				await timeout(5000)
-
 				page.on('console', async message => {
 					console.log({message})
 				})
@@ -268,15 +251,11 @@ async function makeZoo(cam){
 				await page.$eval('video', el => el.play()).catch(e => console.error(`error playing video: ${e}`))
 				await page.waitForTimeout(5000)
 				await takeScreenshots(element)
-
-				
 			}
 	
 		} catch (err) {
 			console.log(`Error in screenshot function: ${err}`)
 		}
-
-		
 	
 	}
 
@@ -284,7 +263,7 @@ async function makeZoo(cam){
 	async function getZoos(){
 		// await loopThroughCams(sample)
 		// launch a single page 
-		const page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
+		const page = await browser.newPage({_recordVideos: true}).catch(e => console.error(`error launching new page: ${e}`))
 		await screenshot(page)
 		// close browser after screenshots are taken
 		await browser.close()
@@ -304,8 +283,6 @@ async function runBatches(){
 
 	try {
 		for (let i = 5; i < 8; i += 1){
-			console.log({i})
-			
 			const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
 
 			await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
