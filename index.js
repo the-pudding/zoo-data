@@ -278,22 +278,36 @@ async function makeZoo(cam){
 }
 
 
-async function runBatches(){
-	// run the script in batches
+// async function runBatches(){
+// 	// run the script in batches
 
-	try {
-		for (let i = 0; i < webcams.length; i += 1){
-			const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
-
-			await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
-		
-		}	
-	}
-	catch (err){
-		console.error(err)
-	}
+// 	try {
+// 		// for (let i = 0; i < webcams.length; i += 1){
+// 		// const finished = webcams.slice(i, i + 1).map(async cam =>  makeZoo(cam))
+// 		const sloth = webcams.filter(d => d.id === '67')[0]
+// 		console.log({sloth})
 	
-}
+// 		makeZoo(sloth)
+// 		// await Promise.all(finished).catch(e => console.log(`Error in getting videos for batch ${i} - ${e}`))
+		
+// 		// }	
+// 	}
+// 	catch (err){
+// 		console.error(err)
+// 	}
+	
+// }
 
 
-runBatches()
+// runBatches()
+
+// automatically run this
+(async function loopThroughCams(){
+	return new Promise(async resolve => {
+		for (const [index, cam] of webcams.entries()){
+			await makeZoo(cam)
+
+			if (index === webcams.length - 1) resolve()
+		}
+	}).catch(err => console.error(`Issue looping through cams: ${err}`))
+})()
