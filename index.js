@@ -32,8 +32,7 @@ async function makeZoo(cam){
 	// these variables need to remain unique for each video
 	let allScreenshots = []
 
-	// launch browser
-	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox', '-width=750', '-height=500']}).catch(e => console.error(`error launching browser: ${e}`))
+	
 
 	async function createGif(algorithm) {
 		const {id} = cam
@@ -216,13 +215,12 @@ async function makeZoo(cam){
 
 
 	async function screenshot(page) {
-
-		let element = null
-
-		try {
+		return new Promise(async (resolve, reject) => {
+			let element = null
 
 			// set a timeout for the page of 10 seconds
 			page.setDefaultTimeout(15000)
+			page.on('crash', error => reject(error))
 
 			const {url, id, play} = cam
 			console.log(`Preparing ${id} for screenshot`)
@@ -232,10 +230,17 @@ async function makeZoo(cam){
 
 			// if there's a play button, click it
 			if (play) {
+				console.log('checking for buttons')
+	
 				const buttons = play.split(', ')
 				buttons.forEach(async d => {
-					await page.click(`${d}`).catch((e) => console.error(`error looking for play buttons: ${e}`))
+					await page.click(`${d}`, ['timeout=3']).catch((e) => {
+						console.error(`error looking for play buttons: ${e}`)
+							
+					})
 				})
+				
+				
 			}
 
 			// wait for video
@@ -244,24 +249,23 @@ async function makeZoo(cam){
 			element = await page.$('video').catch((e) => {console.error(`error creating element: ${e}`)})
 
 			if (element){
-				page.on('console', async message => {
-					console.log({message})
-				})
-				
 				await page.$eval('video', el => el.play()).catch(e => console.error(`error playing video: ${e}`))
 				await page.waitForTimeout(5000)
 				await takeScreenshots(element).catch(e => console.error(`Error with taking screenshots function: ${e}`))
+				resolve()
 			}
+		})
+
+		
 	
-		} catch (err) {
-			console.log(`Error in screenshot function: ${err}`)
-		}
+	
 	
 	}
 
 
 	async function getZoos(){
-		// await loopThroughCams(sample)
+		// launch browser
+		const browser = await firefox.launch({headless: true,  args: ['--no-sandbox', '-width=750', '-height=500']}).catch(e => console.error(`error launching browser: ${e}`))
 		// launch a single page 
 		const page = await browser.newPage({_recordVideos: true}).catch(e => console.error(`error launching new page: ${e}`))
 		await screenshot(page).catch(e => console.error(`Error taking screenshot in getzoos function: ${e}`))
@@ -303,8 +307,9 @@ async function makeZoo(cam){
 
 // automatically run this
 (async function loopThroughCams(){
+	const sub = webcams.slice(18, 25)
 	return new Promise(async resolve => {
-		for (const [index, cam] of webcams.entries()){
+		for (const [index, cam] of sub.entries()){
 			await makeZoo(cam).catch(e => console.error(`Error making zoos: ${e}`))
 
 			if (index === webcams.length - 1) resolve()

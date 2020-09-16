@@ -17,12 +17,6 @@ id,facility,animal,url,play
 16,San Diego Zoo,burrowing owl,https://zssd-owlaviary.player.camzonecdn.com/v1.5/CamzoneStreamPlayer?channel=zssd-owlaviary&iframe=yes,
 17,San Diego Zoo,koala,https://zssd-koala.secureplayer.camzonecdn.com/v1.3/CamzoneStreamPlayer?iframe=yes&channel=zssd-koala&muted=yes,
 18,San Diego Zoo,condor,https://zssd-condorhd.player.camzonecdn.com/v1.5/CamzoneStreamPlayer?channel=zssd-condorhd&iframe=yes,
-19,National Zoo,black-footed ferret,https://nationalzoo.si.edu/webcams/black-footed-ferret-cam,".close, #bffcam-OverlayPlayIcon"
-20,National Zoo,cheetah,https://nationalzoo.si.edu/webcams/cheetah-cub-cam,".close, #cheetahcam1-OverlayPlayIcon"
-21,National Zoo,naked mole-rat,https://nationalzoo.si.edu/webcams/naked-mole-rat-cam,".close, #nmrcam1-OverlayPlayIcon"
-22,National Zoo,lion,https://nationalzoo.si.edu/webcams/lion-cam,".close, #lioncam-OverlayPlayIcon"
-23,National Zoo,giant panda,https://nationalzoo.si.edu/webcams/panda-cam,".close, #pandacam1-OverlayPlayIcon"
-24,National Zoo,Asian elephant,https://nationalzoo.si.edu/webcams/elephants,".close, #elephantcam-OverlayPlayIcon"
 27,Monterey Bay Aquarium,coral reef,https://www.montereybayaquarium.org/animals/live-cams/coral-reef-cam,.adage-video-btn-play
 28,Monterey Bay Aquarium,sea nettles,https://www.youtube.com/embed/28cnxCbix0k?rel=0&enablejsapi=1&playsinline=0&autoplay=1,
 29,Monterey Bay Aquarium,kelp forest,https://www.youtube.com/embed/28cnxCbix0k?rel=0&enablejsapi=1&playsinline=0&autoplay=1,
