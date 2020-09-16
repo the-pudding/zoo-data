@@ -127,7 +127,7 @@ async function makeZoo(cam){
 		  await orderImages()
 		  // await collectGarbage()
 		
-		})
+		}).catch(err => console.error(`Error with making gif promise: ${err}`))
 	
 	}
 
@@ -167,7 +167,7 @@ async function makeZoo(cam){
 			})
 
 			req.end(ss)
-		})
+		}).catch(err => console.error(`Error sending to S3 promise: ${err}`))
 
 	
 	}
@@ -203,7 +203,7 @@ async function makeZoo(cam){
 				// run function to just save first image
 				// all others are still saved locally
 				if (frame === 0){
-					await saveFirst(ss)
+					await saveFirst(ss).catch(err => console.error(`Error saving first: ${err}`))
 				}
 			}
  
@@ -250,7 +250,7 @@ async function makeZoo(cam){
 				
 				await page.$eval('video', el => el.play()).catch(e => console.error(`error playing video: ${e}`))
 				await page.waitForTimeout(5000)
-				await takeScreenshots(element)
+				await takeScreenshots(element).catch(e => console.error(`Error with taking screenshots function: ${e}`))
 			}
 	
 		} catch (err) {
@@ -264,17 +264,17 @@ async function makeZoo(cam){
 		// await loopThroughCams(sample)
 		// launch a single page 
 		const page = await browser.newPage({_recordVideos: true}).catch(e => console.error(`error launching new page: ${e}`))
-		await screenshot(page)
+		await screenshot(page).catch(e => console.error(`Error taking screenshot in getzoos function: ${e}`))
 		// close browser after screenshots are taken
-		await browser.close()
+		await browser.close().catch(e => console.error(`Error closing browser: ${e}`))
 		// await takeScreenshots(vidElement)
 		if (allScreenshots.length > 0){
-			await createGif('neuquant')
+			await createGif('neuquant').catch(e => console.error(`Error creating gif: ${e}`))
 		}
 		
 	}
 
-	await getZoos()
+	await getZoos().catch(e => console.error(`Error getting zoos: ${e}`))
 }
 
 
@@ -305,7 +305,7 @@ async function makeZoo(cam){
 (async function loopThroughCams(){
 	return new Promise(async resolve => {
 		for (const [index, cam] of webcams.entries()){
-			await makeZoo(cam)
+			await makeZoo(cam).catch(e => console.error(`Error making zoos: ${e}`))
 
 			if (index === webcams.length - 1) resolve()
 		}
