@@ -172,44 +172,47 @@ async function makeZoo(cam){
 	}
 
 	async function takeScreenshots(element){
-		return new Promise(async (resolveSS) => {
-			const {id} = cam			
+		return new Promise(async (resolveSS, rejectSS) => {
+			if (element !== null){
+				const {id} = cam			
 			
-			// save only the first image to AWS
-			async function saveFirst(ss){
+				// save only the first image to AWS
+				async function saveFirst(ss){
 
-				const videoDimensions = await element.evaluate(() => ({
-					width: document.documentElement.clientWidth,
-					height: document.documentElement.clientHeight
-				})).catch(e => console.error(`save first error: ${e}`))
+					const videoDimensions = await element.evaluate(() => ({
+						width: document.documentElement.clientWidth,
+						height: document.documentElement.clientHeight
+					})).catch(e => console.error(`save first error: ${e}`))
 
-				await sendToS3(ss, videoDimensions)
-			}
+					await sendToS3(ss, videoDimensions)
+				}
 			
-			const allScreenshots = []
-			// eslint-disable-next-line no-restricted-syntax
-			for (const frame of frameRange){
+				const allScreenshots = []
+				// eslint-disable-next-line no-restricted-syntax
+				for (const frame of frameRange){
 	
 				// eslint-disable-next-line no-await-in-loop
-				const ss = await element.screenshot({path: ''}).catch((e) => {
-					console.error(`error in playwright screenshot: ${e}`); 
-					return('') })
+					const ss = await element.screenshot({path: ''}).catch((e) => {
+						console.error(`error in playwright screenshot: ${e}`); 
+						return('') })
 
-				const str = ss.toString('base64')
+					const str = ss.toString('base64')
 
-				// save all ss data locally 
+					// save all ss data locally 
 				
-				allScreenshots.push({index: frame, str, ss, id})
+					allScreenshots.push({index: frame, str, ss, id})
 
-				// run function to just save first image
-				// all others are still saved locally
-				if (frame === 0){
-					await saveFirst(ss).catch(err => console.error(`Error saving first: ${err}`))
+					// run function to just save first image
+					// all others are still saved locally
+					if (frame === 0){
+						await saveFirst(ss).catch(err => console.error(`Error saving first: ${err}`))
+					}
 				}
-			}
  
-			// then resolve this promise to continue to gif-making
-			resolveSS(allScreenshots)
+				// then resolve this promise to continue to gif-making
+				resolveSS(allScreenshots)
+			} rejectSS()
+			
 
 		}).catch((e) => console.error(`take screenshots error: ${e}`))
 	}
@@ -275,18 +278,22 @@ async function makeZoo(cam){
 			const browser = await firefox.launch({headless: true,  args: ['--no-sandbox']}).catch(e => console.error(`error launching browser: ${e}`))
 			// launch a single page 
 			const page = await browser.newPage({_recordVideos: true}).catch(e => console.error(`error launching new page: ${e}`))
-			await screenshot(page)
-				.then(async response => {
-					await browser.close().catch(e => console.error(`Error closing browser: ${e}`))
-					if (response.length > 0){
-						await createGif('neuquant', response).catch(e => console.error(`Error creating gif: ${e}`))
-						resolve()
-					}
-				}).catch(async e => {
-					console.error(`Error taking screenshot in getzoos function: ${e}`)
-					await browser.close().catch(console.error(`Error closing browser: ${e}`))
-					reject()
-				})
+			
+			if (page){
+				await screenshot(page)
+					.then(async response => {
+						await browser.close().catch(e => console.error(`Error closing browser: ${e}`))
+						if (response.length > 0){
+							await createGif('neuquant', response).catch(e => console.error(`Error creating gif: ${e}`))
+							resolve()
+						}
+					}).catch(async e => {
+						console.error(`Error taking screenshot in getzoos function: ${e}`)
+						await browser.close().catch(console.error(`Error closing browser: ${e}`))
+						reject()
+					})
+			} reject()
+			
 		})
 	}
 	 await getZoos().catch(e => console.error(`Error getting zoos: ${e}`))
@@ -318,12 +325,14 @@ async function makeZoo(cam){
 
 // automatically run this
 (async function loopThroughCams(){
-	const sub = webcams// .slice(43, 46)
+	const sub = webcams.slice(18, 22)
 	return new Promise(async resolve => {
 		for (const [index, cam] of sub.entries()){
 
+			await makeZoo(cam).catch(e => console.error(`Error making zoos: ${e}`))
+
 			// timeout any promise after 3 min to prevent hanging at any stage
-			await promiseTimeout(180000, makeZoo(cam).catch(e => console.error(`Error making zoos: ${e}`))).catch(e => console.error(`Error with promise timeout: ${e}`))
+			// await promiseTimeout(180000, ).catch(e => console.error(`Error with promise timeout: ${e}`))
 
 			if (index === sub.length - 1) resolve()
 		}
