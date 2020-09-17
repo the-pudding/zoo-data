@@ -129,9 +129,23 @@ async function makeZoo(cam){
 	}
 
 
-	function timeout(ms){
-		return new Promise(resolve => setTimeout(resolve, ms)).catch(e => console.error(e))
-	}
+	// Create a promise that rejects in <ms> milliseconds
+	function promiseTimeout(ms, promise){
+
+		// Create a promise that rejects in <ms> milliseconds
+		const timeout = new Promise((resolve, reject) => {
+		  const id = setTimeout(() => {
+				clearTimeout(id);
+				reject(`Timed out in ${ms} ms.`)
+		  }, ms)
+		})
+	  
+		// Returns a race between our timeout and the passed in promise
+		return Promise.race([
+		  promise,
+		  timeout
+		])
+	  }
 
 
 	async function sendToS3(ss, videoDimensions){
@@ -212,6 +226,13 @@ async function makeZoo(cam){
 		}).catch((e) => console.error(`take screenshots error: ${e}`))
 	}
 
+	async function checkPlayButtons(page, play){
+		const buttons = play.split(', ')
+		for (const [index, btn] of buttons.entries()){
+			await page.click(`${btn}`, {timeout: 10000}).catch(e => {console.error(`error clicking play buttons: ${e}`)})
+		}
+	}
+
 
 	async function screenshot(page) {
 		return new Promise(async (resolve, reject) => {
@@ -233,24 +254,13 @@ async function makeZoo(cam){
 			await page.goto(url).catch((e) => {console.error(`error navigating to page: ${e}`)})
 
 			// if there's a play button, click it
-			if (play) {
-				console.log('checking for buttons')
-	
-				const buttons = play.split(', ')
-				buttons.forEach(async d => {
-					await page.click(`${d}`, ['timeout=3']).catch((e) => {
-						console.error(`error looking for play buttons: ${e}`)
-							
-					})
-				})
-				
-				
-			}
+			if (play) await checkPlayButtons(page, play) 
 
 			// wait for video
 			// await page.waitForSelector('video').catch((e) => {console.error(`error waiting for video: ${e}`)})
 
 			element = await page.$('video').catch((e) => {console.error(`error creating element: ${e}`)})
+			console.log({element})
 
 			if (element){
 				await page.$eval('video', el => el.play()).catch(e => console.error(`error playing video: ${e}`))
@@ -259,7 +269,7 @@ async function makeZoo(cam){
 					.then(response => resolve(response))
 					.catch(e => console.error(`Error with taking screenshots function: ${e}`))
 				// resolve(allScreenshots)
-			}
+			} else reject(console.error('Can\'t find video element on page'))
 		})
 
 		
