@@ -284,7 +284,7 @@ async function makeZoo(cam){
 	async function getZoos(){
 		return new Promise(async (resolve, reject) => {
 			// launch browser
-			const browser = await firefox.launch({headless: false,  args: ['--no-sandbox']}).catch(e => console.error(`error launching browser: ${e}`))
+			const browser = await firefox.launch({headless: true,  args: ['--no-sandbox']}).catch(e => console.error(`error launching browser: ${e}`))
 			// launch a single page 
 			const page = await browser.newPage({_recordVideos: true}).catch(e => console.error(`error launching new page: ${e}`))
 			await screenshot(page)
