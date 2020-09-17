@@ -228,6 +228,7 @@ async function makeZoo(cam){
 
 	async function checkPlayButtons(page, play){
 		const buttons = play.split(', ')
+		console.log('trying to click buttons')
 		for (const [index, btn] of buttons.entries()){
 			await page.click(`${btn}`, {timeout: 10000}).catch(e => {console.error(`error clicking play buttons: ${e}`)})
 		}
@@ -239,7 +240,7 @@ async function makeZoo(cam){
 			let element = null
 
 			// set a timeout for the page of 10 seconds
-			page.setDefaultTimeout(15000)
+			await page.setDefaultTimeout(20000)
 			page.on('crash', error => reject(error))
 
 			const {url, id, play} = cam
@@ -251,7 +252,7 @@ async function makeZoo(cam){
 			  })
 
 			// navigate to URL
-			await page.goto(url).catch((e) => {console.error(`error navigating to page: ${e}`)})
+			await page.goto(url, {waitUntil: 'networkidle'}).catch((e) => {console.error(`error navigating to page: ${e}`)})
 
 			// if there's a play button, click it
 			if (play) await checkPlayButtons(page, play) 
@@ -259,40 +260,47 @@ async function makeZoo(cam){
 			// wait for video
 			// await page.waitForSelector('video').catch((e) => {console.error(`error waiting for video: ${e}`)})
 
-			element = await page.$('video').catch((e) => {console.error(`error creating element: ${e}`)})
+			element = await page.$$('video', el => {
+				console.log({el})
+				// play video element
+				el.play()
+				// return just the video element
+				return el
+			}).catch((e) => {console.error(`error creating element: ${e}`)})
+			
 
 			if (element){
-				await page.$eval('video', el => el.play()).catch(e => console.error(`error playing video: ${e}`))
 				await page.waitForTimeout(5000)
-				await takeScreenshots(element)
+				const vidEl = await page.$('video').catch((e) => {console.error(`error finding element: ${e}`)})
+				await takeScreenshots(vidEl)
 					.then(response => resolve(response))
 					.catch(e => console.error(`Error with taking screenshots function: ${e}`))
 				// resolve(allScreenshots)
 			} else reject(console.error('Can\'t find video element on page'))
 		})
-
-		
-	
-	
-	
 	}
 
 
 	async function getZoos(){
-		// launch browser
-		const browser = await firefox.launch({headless: true,  args: ['--no-sandbox', '-width=750', '-height=500']}).catch(e => console.error(`error launching browser: ${e}`))
-		// launch a single page 
-		const page = await browser.newPage({_recordVideos: true}).catch(e => console.error(`error launching new page: ${e}`))
-		await screenshot(page)
-			.then(async response => {
-				await browser.close().catch(e => console.error(`Error closing browser: ${e}`))
-				if (response.length > 0){
-					await createGif('neuquant', response).catch(e => console.error(`Error creating gif: ${e}`))
-				}
-			}).catch(e => console.error(`Error taking screenshot in getzoos function: ${e}`))
-		
+		return new Promise(async (resolve, reject) => {
+			// launch browser
+			const browser = await firefox.launch({headless: false,  args: ['--no-sandbox']}).catch(e => console.error(`error launching browser: ${e}`))
+			// launch a single page 
+			const page = await browser.newPage({_recordVideos: true}).catch(e => console.error(`error launching new page: ${e}`))
+			await screenshot(page)
+				.then(async response => {
+					await browser.close().catch(e => console.error(`Error closing browser: ${e}`))
+					if (response.length > 0){
+						await createGif('neuquant', response).catch(e => console.error(`Error creating gif: ${e}`))
+						resolve()
+					}
+				}).catch(async e => {
+					console.error(`Error taking screenshot in getzoos function: ${e}`)
+					await browser.close().catch(console.error(`Error closing browser: ${e}`))
+					reject()
+				})
+		})
 	}
-
 	await getZoos().catch(e => console.error(`Error getting zoos: ${e}`))
 }
 
@@ -322,7 +330,7 @@ async function makeZoo(cam){
 
 // automatically run this
 (async function loopThroughCams(){
-	const sub = webcams.slice(18, 25)
+	const sub = webcams.slice(43, 46)
 	return new Promise(async resolve => {
 		for (const [index, cam] of webcams.entries()){
 			await makeZoo(cam).catch(e => console.error(`Error making zoos: ${e}`))
