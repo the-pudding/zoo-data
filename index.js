@@ -29,12 +29,8 @@ const client = knox.createClient({
 const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
 
 async function makeZoo(cam){
-	// these variables need to remain unique for each video
-	let allScreenshots = []
 
-	
-
-	async function createGif(algorithm) {
+	async function createGif(algorithm, allScreenshots) {
 		const {id} = cam
 		return new Promise(async (resolve1, rejectGif) => {
 			console.log(`Creating ${id} gif`)
@@ -51,6 +47,7 @@ async function makeZoo(cam){
 					else resolve2([res.headers['x-amz-meta-width'], res.headers['x-amz-meta-height']])
 				})
 
+
 			}).catch(e => console.error(e))
 
 			const canvasWidth = 500
@@ -59,7 +56,7 @@ async function makeZoo(cam){
 			let encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
 	
 			let canvas = createCanvas(canvasWidth, canvasHeight)
-			const ctx = canvas.getContext('2d')
+			let ctx = canvas.getContext('2d')
 			encoder.start()
 			encoder.setDelay(200)
 
@@ -119,6 +116,7 @@ async function makeZoo(cam){
 				// set back to nothing for garbage collecting
 				encoder = null
 				canvas = null
+				ctx = null
 
 			  
 		  }
@@ -172,7 +170,7 @@ async function makeZoo(cam){
 	}
 
 	async function takeScreenshots(element){
-		await new Promise(async (resolveSS) => {
+		return new Promise(async (resolveSS) => {
 			const {id} = cam			
 			
 			// save only the first image to AWS
@@ -185,6 +183,8 @@ async function makeZoo(cam){
 
 				await sendToS3(ss, videoDimensions)
 			}
+			
+			const allScreenshots = []
 			// eslint-disable-next-line no-restricted-syntax
 			for (const frame of frameRange){
 	
@@ -195,8 +195,8 @@ async function makeZoo(cam){
 
 				const str = ss.toString('base64')
 
-
 				// save all ss data locally 
+				
 				allScreenshots.push({index: frame, str, ss, id})
 
 				// run function to just save first image
@@ -207,10 +207,9 @@ async function makeZoo(cam){
 			}
  
 			// then resolve this promise to continue to gif-making
-			resolveSS()
+			resolveSS(allScreenshots)
 
 		}).catch((e) => console.error(`take screenshots error: ${e}`))
-	
 	}
 
 
@@ -224,6 +223,11 @@ async function makeZoo(cam){
 
 			const {url, id, play} = cam
 			console.log(`Preparing ${id} for screenshot`)
+
+			await page.setViewportSize({
+				width: 640,
+				height: 480,
+			  })
 
 			// navigate to URL
 			await page.goto(url).catch((e) => {console.error(`error navigating to page: ${e}`)})
@@ -251,8 +255,10 @@ async function makeZoo(cam){
 			if (element){
 				await page.$eval('video', el => el.play()).catch(e => console.error(`error playing video: ${e}`))
 				await page.waitForTimeout(5000)
-				await takeScreenshots(element).catch(e => console.error(`Error with taking screenshots function: ${e}`))
-				resolve()
+				await takeScreenshots(element)
+					.then(response => resolve(response))
+					.catch(e => console.error(`Error with taking screenshots function: ${e}`))
+				// resolve(allScreenshots)
 			}
 		})
 
@@ -268,13 +274,13 @@ async function makeZoo(cam){
 		const browser = await firefox.launch({headless: true,  args: ['--no-sandbox', '-width=750', '-height=500']}).catch(e => console.error(`error launching browser: ${e}`))
 		// launch a single page 
 		const page = await browser.newPage({_recordVideos: true}).catch(e => console.error(`error launching new page: ${e}`))
-		await screenshot(page).catch(e => console.error(`Error taking screenshot in getzoos function: ${e}`))
-		// close browser after screenshots are taken
-		await browser.close().catch(e => console.error(`Error closing browser: ${e}`))
-		// await takeScreenshots(vidElement)
-		if (allScreenshots.length > 0){
-			await createGif('neuquant').catch(e => console.error(`Error creating gif: ${e}`))
-		}
+		await screenshot(page)
+			.then(async response => {
+				await browser.close().catch(e => console.error(`Error closing browser: ${e}`))
+				if (response.length > 0){
+					await createGif('neuquant', response).catch(e => console.error(`Error creating gif: ${e}`))
+				}
+			}).catch(e => console.error(`Error taking screenshot in getzoos function: ${e}`))
 		
 	}
 
