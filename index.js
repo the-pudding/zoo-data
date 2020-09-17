@@ -8,7 +8,7 @@ const { firefox } = require('playwright-firefox');
 const GIFEncoder = require('gif-encoder-2')
 const {createCanvas, Image} = require('canvas')
 const fs = require('fs')
-const knox = require('knox')
+const AWS = require('aws-sdk')
 const d3 = require('d3-dsv')
 
 const filePathImages = 'zoo-cams/stills'
@@ -20,11 +20,19 @@ const frameRange = [...Array(frameCount).keys()]
 
 const {AWS_KEY, AWS_KEY_SECRET, AWS_BUCKET} = process.env
 
-const client = knox.createClient({
-	key: AWS_KEY,
-	secret: AWS_KEY_SECRET,
-	bucket: AWS_BUCKET
+const s3Bucket = new AWS.S3({
+	accessKeyId: AWS_KEY,
+	secretAccessKey: AWS_KEY_SECRET,
+	params: {
+		Bucket: AWS_BUCKET
+	}
 })
+
+// const client = knox.createClient({
+// 	key: AWS_KEY,
+// 	secret: AWS_KEY_SECRET,
+// 	bucket: AWS_BUCKET
+// })
 
 const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
 
@@ -55,16 +63,13 @@ async function makeZoo(cam){
   
 			const [width, height] = await new Promise((resolve2, rejectFile) => {
 
-			// get the file and metadata from s3 without loading it
-				client.getFile(`${filePathImages}/${id}.png`, (err, res) => {
-					if (err) {
-						rejectFile()
-						rejectGif()
-						console.error(err)
-					}
-					else resolve2([res.headers['x-amz-meta-width'], res.headers['x-amz-meta-height']])
+				s3Bucket.getObject({
+					Bucket: AWS_BUCKET,
+					Key: `${filePathImages}/${id}.png`
+				}, (err, data) => {
+					if (err) rejectFile(console.error(`Failed to retrieve image: ${err}`))
+					resolve2([+data.Metadata['x-amz-meta-width'], +data.Metadata['x-amz-meta-height']])
 				})
-
 
 			}).catch(e => console.error(e))
 
@@ -122,32 +127,19 @@ async function makeZoo(cam){
 				encoder.finish()
 				const buffer = encoder.out.getData()
 
-				const req = client.put(`${filePathGIF}/${id}.gif`, {
-					'Content-Type': 'image/gif',
+				s3Bucket.upload({
+					Key: `${filePathGIF}/${id}.gif`, 
+					Body: buffer
+				}, (err) => {
+					if (err) rejectGif(console.error(`Error uploading gif:${err}`))
+					resolve1(console.log(`Cam ${id} gif uploaded successfully`))
 				})
 
-				req.on('response', (res) => {
-					if (res.statusCode === 200){
-						console.log('saved to %s', req.url)
-						resolve1()
-						allScreenshots = []
-					} else {
-						console.log(`Status: ${res.statusCode}`)
-						rejectGif()
-					}
-				})
-
-				req.on('error', e => {console.error(`Error in saving gif: ${e}`)
-					rejectGif()})
-
-				req.end(buffer)
 
 				// set back to nothing for garbage collecting
 				encoder = null
 				canvas = null
 				ctx = null
-
-			  
 		  }
 
 		  await orderImages()
@@ -165,30 +157,17 @@ async function makeZoo(cam){
 
 		return new Promise((resolve, reject) => {
 		// write screenshot to AWS
-			const req = client.put(`${filePathImages}/${id}.png`, {
-				'Content-Type': 'image/png',
-				'x-amz-meta-height': videoDimensions.height,
-				'x-amz-meta-width': videoDimensions.width
+			s3Bucket.upload({
+				Key: `${filePathImages}/${id}.png`, 
+				Body: ss, 
+				Metadata: {
+					'x-amz-meta-width': videoDimensions.width.toString(), 
+					'x-amz-meta-height': videoDimensions.height.toString()
+				}
+			}, (err) => {
+				if (err) reject(`Upload error: ${err}`)
+				resolve()
 			})
-
-			req.on('response', (res) => {
-				if (res.statusCode === 200){
-					console.log('saved to %s', req.url)
-					resolve()
-			
-					return res.statusCode
-				} 
-				console.error(`Error sending to s3: ${res.statusCode}`)
-				reject()
-				return null
-			})
-
-			req.on('error', e => {
-				reject(e)
-				console.error(e)
-			})
-
-			req.end(ss)
 		}).catch(err => console.error(`Error sending to S3 promise: ${err}`))
 	}
 
@@ -339,14 +318,14 @@ async function makeZoo(cam){
 
 // automatically run this
 (async function loopThroughCams(){
-	const sub = webcams.slice(43, 46)
+	const sub = webcams// .slice(43, 46)
 	return new Promise(async resolve => {
-		for (const [index, cam] of webcams.entries()){
+		for (const [index, cam] of sub.entries()){
 
 			// timeout any promise after 3 min to prevent hanging at any stage
 			await promiseTimeout(180000, makeZoo(cam).catch(e => console.error(`Error making zoos: ${e}`))).catch(e => console.error(`Error with promise timeout: ${e}`))
 
-			if (index === webcams.length - 1) resolve()
+			if (index === sub.length - 1) resolve()
 		}
 	}).catch(err => console.error(`Issue looping through cams: ${err}`))
 })()
