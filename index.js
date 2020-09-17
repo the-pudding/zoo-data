@@ -52,7 +52,18 @@ async function makeZoo(cam){
 
 			const canvasWidth = 500
 			const canvasHeight = 281
-		
+
+
+			const ratio = width / height
+			let outputWidth = canvasWidth
+			let outputHeight = outputWidth / ratio
+			if (outputHeight > canvasHeight){
+				outputHeight = canvasHeight
+				outputWidth = outputHeight * ratio
+			}
+
+
+			// console.log({width, height, canvasWidth, canvasHeight, outputWidth, outputHeight, outputX, outputY})
 			let encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
 	
 			let canvas = createCanvas(canvasWidth, canvasHeight)
@@ -65,10 +76,10 @@ async function makeZoo(cam){
 					const image = new Image()
 
 					image.onload = () => {
-						ctx.drawImage(image, 0, 0, width, height, // source dimensions
-							0, 0, canvasWidth, canvasHeight)
+						ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight)// , // source dimensions
+						// 0, 0, canvasWidth, canvasHeight)
 
-						ctx.getImageData(0, 0, width, height)
+						ctx.getImageData(0, 0, canvasWidth, canvasHeight)
 
 						encoder.addFrame(ctx)
 						resolveProc()
@@ -332,7 +343,7 @@ async function makeZoo(cam){
 (async function loopThroughCams(){
 	const sub = webcams.slice(43, 46)
 	return new Promise(async resolve => {
-		for (const [index, cam] of webcams.entries()){
+		for (const [index, cam] of sub.entries()){
 			await makeZoo(cam).catch(e => console.error(`Error making zoos: ${e}`))
 
 			if (index === webcams.length - 1) resolve()
