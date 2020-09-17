@@ -260,7 +260,6 @@ async function makeZoo(cam){
 			// await page.waitForSelector('video').catch((e) => {console.error(`error waiting for video: ${e}`)})
 
 			element = await page.$('video').catch((e) => {console.error(`error creating element: ${e}`)})
-			console.log({element})
 
 			if (element){
 				await page.$eval('video', el => el.play()).catch(e => console.error(`error playing video: ${e}`))
