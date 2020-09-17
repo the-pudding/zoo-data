@@ -343,7 +343,7 @@ async function makeZoo(cam){
 (async function loopThroughCams(){
 	const sub = webcams.slice(43, 46)
 	return new Promise(async resolve => {
-		for (const [index, cam] of sub.entries()){
+		for (const [index, cam] of webcams.entries()){
 			await makeZoo(cam).catch(e => console.error(`Error making zoos: ${e}`))
 
 			if (index === webcams.length - 1) resolve()
