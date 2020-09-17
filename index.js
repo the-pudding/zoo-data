@@ -28,6 +28,24 @@ const client = knox.createClient({
 
 const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
 
+// Create a promise that rejects in <ms> milliseconds
+function promiseTimeout(ms, promise){
+
+	// Create a promise that rejects in <ms> milliseconds
+	const timeout = new Promise((resolve, reject) => {
+		  const id = setTimeout(() => {
+			clearTimeout(id);
+			reject(`Timed out in ${ms} ms.`)
+		  }, ms)
+	})
+	  
+	// Returns a race between our timeout and the passed in promise
+	return Promise.race([
+		  promise,
+		  timeout
+	])
+}
+
 async function makeZoo(cam){
 
 	async function createGif(algorithm, allScreenshots) {
@@ -140,24 +158,6 @@ async function makeZoo(cam){
 	}
 
 
-	// Create a promise that rejects in <ms> milliseconds
-	function promiseTimeout(ms, promise){
-
-		// Create a promise that rejects in <ms> milliseconds
-		const timeout = new Promise((resolve, reject) => {
-		  const id = setTimeout(() => {
-				clearTimeout(id);
-				reject(`Timed out in ${ms} ms.`)
-		  }, ms)
-		})
-	  
-		// Returns a race between our timeout and the passed in promise
-		return Promise.race([
-		  promise,
-		  timeout
-		])
-	  }
-
 
 	async function sendToS3(ss, videoDimensions){
 
@@ -190,8 +190,6 @@ async function makeZoo(cam){
 
 			req.end(ss)
 		}).catch(err => console.error(`Error sending to S3 promise: ${err}`))
-
-	
 	}
 
 	async function takeScreenshots(element){
@@ -344,7 +342,10 @@ async function makeZoo(cam){
 	const sub = webcams.slice(43, 46)
 	return new Promise(async resolve => {
 		for (const [index, cam] of webcams.entries()){
-			await makeZoo(cam).catch(e => console.error(`Error making zoos: ${e}`))
+			const zoo = await makeZoo(cam).catch(e => console.error(`Error making zoos: ${e}`))
+
+			// timeout any promise after 5 min to prevent hanging at any stage
+			promiseTimeout(300000, zoo)
 
 			if (index === webcams.length - 1) resolve()
 		}
