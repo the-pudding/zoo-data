@@ -325,7 +325,7 @@ async function makeZoo(cam){
 
 // automatically run this
 (async function loopThroughCams(){
-	const sub = webcams.slice(18, 22)
+	const sub = webcams// .slice(18, 22)
 	return new Promise(async resolve => {
 		for (const [index, cam] of sub.entries()){
 
