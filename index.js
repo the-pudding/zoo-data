@@ -31,7 +31,7 @@ const webcams = d3.csvParse(fs.readFileSync('zoos.csv', 'utf-8'))
 async function checkPlayButtons(page, play){
 	const buttons = play.split(', ')
 	for (const btn of buttons){
-		await page.click(`${btn}`, {timeout: 10000})
+		await page.click(`${btn}`, {timeout: 10000}).catch(e => `Oops can't click: ${e}`)
 	}
 }
 
@@ -172,7 +172,7 @@ async function makeZoo(cam){
 
 (async function loopThroughCams(){
 	const sa = [27, 11, 90]
-	const sub = webcams.filter(d => sa.includes(+d.id))
+	const sub = webcams// .filter(d => sa.includes(+d.id))
     
 	for (const cam of sub){
 		await makeZoo(cam).catch(error => console.error(`Error getting zoos: ${error}`))
