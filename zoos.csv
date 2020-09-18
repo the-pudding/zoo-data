@@ -17,6 +17,12 @@ id,facility,animal,url,play
 16,San Diego Zoo,burrowing owl,https://zssd-owlaviary.player.camzonecdn.com/v1.5/CamzoneStreamPlayer?channel=zssd-owlaviary&iframe=yes,
 17,San Diego Zoo,koala,https://zssd-koala.secureplayer.camzonecdn.com/v1.3/CamzoneStreamPlayer?iframe=yes&channel=zssd-koala&muted=yes,
 18,San Diego Zoo,condor,https://zssd-condorhd.player.camzonecdn.com/v1.5/CamzoneStreamPlayer?channel=zssd-condorhd&iframe=yes,
+19,National Zoo,black-footed ferret,https://nationalzoo.si.edu/webcams/black-footed-ferret-cam,"button.close, #bffcam-OverlayPlayIcon"
+20,National Zoo,cheetah,https://nationalzoo.si.edu/webcams/cheetah-cub-cam,"button.close, #cheetahcam1-OverlayPlayIcon"
+21,National Zoo,naked mole-rat,https://nationalzoo.si.edu/webcams/naked-mole-rat-cam,"button.close, #nmrcam1-OverlayPlayIcon"
+22,National Zoo,lion,https://nationalzoo.si.edu/webcams/lion-cam,"button.close, #lioncam-OverlayPlayIcon"
+23,National Zoo,giant panda,https://nationalzoo.si.edu/webcams/panda-cam,"button.close, #pandacam1-OverlayPlayIcon"
+24,National Zoo,Asian elephant,https://nationalzoo.si.edu/webcams/elephants,"button.close, #elephantcam-OverlayPlayIcon"
 27,Monterey Bay Aquarium,coral reef,https://www.montereybayaquarium.org/animals/live-cams/coral-reef-cam,.adage-video-btn-play
 28,Monterey Bay Aquarium,sea nettles,https://www.youtube.com/embed/28cnxCbix0k?rel=0&enablejsapi=1&playsinline=0&autoplay=1,
 29,Monterey Bay Aquarium,kelp forest,https://www.youtube.com/embed/28cnxCbix0k?rel=0&enablejsapi=1&playsinline=0&autoplay=1,
@@ -82,10 +88,10 @@ id,facility,animal,url,play
 107,Kansas City Zoo,"macaroni penguin, king penguin",https://www.youtube.com/embed/CLS2Uxxr8xk?autoplay=1,
 108,Kansas City Zoo,Bornean orangutan,https://www.youtube.com/embed/OVVFWyB5XSE?autoplay=1,
 109,Alaska Zoo,polar bear,https://www.youtube.com/embed/hWbt2eVCEe8?autoplay=1,
-110,Chattanooga Zoo,meerkat,http://www.chattzoo.org/streams/?id=2224,.jw-icon
-111,Chattanooga Zoo,snow leopards,http://www.chattzoo.org/streams/?id=2228,.jw-icon
-112,Chattanooga Zoo,tamarin,http://www.chattzoo.org/streams/?id=2234,.jw-icon
-113,Chattanooga Zoo,spotted genet,http://www.chattzoo.org/streams/?id=2235,.jw-icon
+110,Chattanooga Zoo,meerkat,http://www.chattzoo.org/streams/?id=2224,.jw-reset
+111,Chattanooga Zoo,snow leopards,http://www.chattzoo.org/streams/?id=2228,.jw-reset
+112,Chattanooga Zoo,tamarin,http://www.chattzoo.org/streams/?id=2234,.jw-reset
+113,Chattanooga Zoo,spotted genet,http://www.chattzoo.org/streams/?id=2235,.jw-reset
 114,Cheyenne Mountain Zoo,giraffe,https://www.youtube.com/embedXtRdw-YK2i8?autoplay=1,
 123,Greenville Zoo,giraffe,https://public.earthcam.net/tJ90CoLmq7TzrY396Yd88EcZCvjINnq0l56Ndt3BgZM!.tJ90CoLmq7TzrY396Yd88Owz3clOgztAIKv3BW9nKyA!.tJ90CoLmq7TzrY396Yd88Jv0uyg2nfZkWPNAt6hpfXQ!/giraffe_project/giraffe_barn/live,
 124,Highland Wildlife Park,snow monkey,https://content.jwplatform.com/previews/gnCCEINK-7ldQbxkB,

@@ -48,13 +48,14 @@ async function findVideo(page, cam){
 	await page.goto(url)
         
 	// if there are play buttons, click them
-	if (play) await checkPlayButtons(page, play).check(error => console.error(`Error clicking play buttons: ${error}`))
+	if (play) await checkPlayButtons(page, play).catch(error => console.error(`Error clicking play buttons: ${error}`))
 
 	// get video element playing
+	await page.waitForTimeout(4000)
 	await page.$$('video', el => el.play())
+	if (play) await page.waitForTimeout(20000)
+	else await page.waitForTimeout(2000)
 
-	// wait for 5 seconds then return video element
-	await page.waitForTimeout(5000)
 	return await page.$('video')
 }
 
@@ -168,7 +169,7 @@ async function makeZoo(cam){
 }
 
 (async function loopThroughCams(){
-	const sa = [27, 11, 90]
+	const sa = [1, 19, 20, 21, 22, 23, 24, 27]
 	const sub = webcams// .filter(d => sa.includes(+d.id))
     
 	for (const cam of sub){
