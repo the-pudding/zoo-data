@@ -119,11 +119,11 @@ async function makeGIF(allScreenshots, videoDimensions, algorithm){
 	const dimensions  = {width, height, canvasWidth, canvasHeight}
         
 	// setup encoder
-	let encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
+	const encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
 
 	// setup canvas
-	let canvas = createCanvas(canvasWidth, canvasHeight)
-	let ctx = canvas.getContext('2d')
+	const canvas = createCanvas(canvasWidth, canvasHeight)
+	const ctx = canvas.getContext('2d')
 
 	// start encoder
 	encoder.start()
@@ -138,9 +138,6 @@ async function makeGIF(allScreenshots, videoDimensions, algorithm){
 	encoder.finish()
 	const buffer = encoder.out.getData()
 
-	encoder = null
-	canvas = null
-	ctx = null 
 	return buffer
 }
 
