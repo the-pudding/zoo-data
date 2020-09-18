@@ -66,8 +66,8 @@ async function saveToS3(ss, videoDimensions, id, ext){
 			Key: `${path}/${id}.${ext}`,
 			Body: ss, 
 			Metadata: {
-				'x-amz-meta-width': videoDimensions.width.toString(),
-				'x-amz-meta-height': videoDimensions.height.toString()
+				'width': videoDimensions.width.toString(),
+				'height': videoDimensions.height.toString()
 			}
 		}, (err, data) => {
 			if (err) reject(err)
@@ -102,10 +102,14 @@ async function takeScreenshots(vidEl, id){
 
 async function processImage(file, ctx, encoder, dimensions){
 	const image = new Image()
+	const {canvasWidth, canvasHeight, width, height} = dimensions
+
+	const x = width > canvasWidth ? (canvasWidth - width) / 2 : 0
+	const y = height > canvasHeight ? (canvasHeight - height) / 2 : 0
 
 	image.onload = () => {
-		ctx.drawImage(image, 0, 0, dimensions.canvasWidth, dimensions.canvasHeight)
-		ctx.getImageData(0, 0, dimensions.width, dimensions.height)
+		ctx.drawImage(image, x, y)
+		ctx.getImageData(0, 0, canvasWidth, canvasHeight)
 
 		encoder.addFrame(ctx)
 	}
@@ -123,7 +127,7 @@ async function makeGIF(allScreenshots, videoDimensions, algorithm){
 	const encoder = new GIFEncoder(canvasWidth, canvasHeight, algorithm)
 
 	// setup canvas
-	const canvas = createCanvas(canvasWidth, canvasHeight)
+	const canvas = createCanvas(canvasWidth, canvasHeight)// .style('width', `${canvasWidth}px`).style('height', `${canvasHeight}px`)
 	const ctx = canvas.getContext('2d')
 
 	// start encoder
@@ -169,7 +173,7 @@ async function makeZoo(cam){
 }
 
 (async function loopThroughCams(){
-	const sa = [1, 19, 20, 21, 22, 23, 24, 27]
+	const sa = [7, 20, 21, 22, 23, 24, 27]
 	const sub = webcams// .filter(d => sa.includes(+d.id))
     
 	for (const cam of sub){
