@@ -21,6 +21,7 @@ const {AWS_KEY, AWS_KEY_SECRET, AWS_BUCKET} = process.env
 const s3Bucket = new AWS.S3({
 	accessKeyId: AWS_KEY,
 	secretAccessKey: AWS_KEY_SECRET,
+	region: 'us-east-1',
 	params: {
 		Bucket: AWS_BUCKET
 	}
@@ -170,7 +171,9 @@ async function makeZoo(cam){
         
 	// send gif to s3
 	await saveToS3(gif, videoDimensions, cam.id, 'gif')
-	console.log('all completed')
+
+	// return value to resolve
+	return 'finished it!'
 }
 
 (async function loopThroughCams(){
@@ -178,8 +181,8 @@ async function makeZoo(cam){
 	const sub = webcams.slice(0, 30)// .filter(d => sa.includes(+d.id))
     
 	for (const cam of sub){
-		await makeZoo(cam).catch(error => console.error(`Error getting zoos: ${error}`))
-		console.log(`back in the for loop for ${cam.id}`)
+		const output = await makeZoo(cam).catch(error => console.error(`Error getting zoos: ${error}`))
+		console.log({output})
 	}
 
 	console.log('for loop finished!')
