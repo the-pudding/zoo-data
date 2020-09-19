@@ -160,7 +160,7 @@ async function makeZoo(cam){
 	const {allScreenshots, videoDimensions} = await takeScreenshots(vidEl, cam.id).catch(error => `Error taking screenshots: '${error}`)
         
 	// close browser 
-	await browser.close().catch(error => console.error(`Error closing browser: ${error}`))
+	await browser.close().then(() => console.log('browser closed')).catch(error => console.error(`Error closing browser: ${error}`))
         
 	// setup gif encoder
 	const gif = await makeGIF(allScreenshots, videoDimensions, 'neuquant').catch(error => console.error(`Error setting up encoder: ${error}`))
@@ -170,13 +170,17 @@ async function makeZoo(cam){
         
 	// send gif to s3
 	await saveToS3(gif, videoDimensions, cam.id, 'gif')
+	console.log('all completed')
 }
 
 (async function loopThroughCams(){
 	const sa = [7, 20, 21, 22, 23, 24, 27]
-	const sub = webcams// .filter(d => sa.includes(+d.id))
+	const sub = webcams.slice(0, 30)// .filter(d => sa.includes(+d.id))
     
 	for (const cam of sub){
 		await makeZoo(cam).catch(error => console.error(`Error getting zoos: ${error}`))
+		console.log(`back in the for loop for ${cam.id}`)
 	}
+
+	console.log('for loop finished!')
 })().catch(error => console.error(`Error looping through cams: ${error}`))
