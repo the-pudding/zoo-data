@@ -18,6 +18,14 @@ const frameRange = [...Array(frameCount).keys()]
 
 const {AWS_KEY, AWS_KEY_SECRET, AWS_BUCKET} = process.env
 
+AWS.config.update({
+	maxRetries: 2,
+	httpOptions: {
+		timeout: 30000,
+		connectTimeout: 5000
+	}
+})
+
 const s3Bucket = new AWS.S3({
 	accessKeyId: AWS_KEY,
 	secretAccessKey: AWS_KEY_SECRET,
@@ -70,11 +78,11 @@ async function saveToS3(ss, videoDimensions, id, ext){
 				'width': videoDimensions.width.toString(),
 				'height': videoDimensions.height.toString()
 			}
-		}, (err, data) => {
+		}, (err) => {
 			if (err) reject(err)
 			else {
 				console.log(`Successfully uploaded ${id}.${ext}`)
-				resolve(data)
+				resolve()
 			}
 		})
 	})
@@ -168,13 +176,16 @@ async function makeZoo(cam){
 
 	// send first screenshot to s3 for placeholder
 	await saveToS3(allScreenshots[0].ss, videoDimensions, cam.id, 'png')
+		.catch(err => console.error(`Issue saving image: ${err}`))
         
 	// send gif to s3
 	await saveToS3(gif, videoDimensions, cam.id, 'gif')
+		.catch(err => console.error(`Issue saving gif: ${err}`))
 
 	// return value to resolve
-	return `finished all processes for ${cam.id}`
+	return `finished all the things for ${cam.id}`
 }
+
 
 (async function loopThroughCams(){
 	const sa = [7, 20, 21, 22, 23, 24, 27]
