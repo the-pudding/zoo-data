@@ -157,7 +157,7 @@ async function makeGIF(allScreenshots, videoDimensions, algorithm){
 
 async function makeZoo(cam){
 	// launch headless browser
-	const browser = await firefox.launch({headless: true,  args: ['--no-sandbox']}).catch(e => console.error(`error launching browser: ${e}`))
+	const browser = await firefox.launch({headless: true,  timeout: 5000, args: ['--no-sandbox']}).catch(e => console.error(`error launching browser: ${e}`))
     
 	// launch a single page 
 	const page = await browser.newPage({_recordVideos: true}).catch(e => console.error(`error launching new page: ${e}`))
