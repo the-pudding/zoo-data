@@ -162,7 +162,7 @@ async function makeZoo(cam){
 	console.log(`Getting started with ${cam.id}`)
 
 	// launch headless browser
-	const browser = await firefox.launch({headless: true,  timeout: 5000, args: ['--no-sandbox']})
+	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
 		.catch(e => console.error(`error launching browser: ${e}`))
 
 	if (browser) console.log('browser launched')
