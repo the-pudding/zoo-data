@@ -2,7 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
-process.env.DEBUG='pw:api'
+process.env.DEBUG='pw:browser'
 
 const { firefox } = require('playwright-firefox');
 const GIFEncoder = require('gif-encoder-2')
