@@ -163,19 +163,22 @@ async function makeZoo(cam){
 
 	// launch headless browser
 	const browser = await firefox.launch({headless: true,  timeout: 5000, args: ['--no-sandbox']})
-		.then(console.log('browser launched'))
 		.catch(e => console.error(`error launching browser: ${e}`))
+
+	if (browser) console.log('browser launched')
     
 	// launch browser context
 	const context = await browser.newContext()
-		.then(console.log('context launched'))
 		.catch(e => console.error(`Error launching new context: ${e}`))
+
+	if (context) console.log('context launched')
 	
 	// launch a single page 
 	const page = await context.newPage()
-		.then(console.log('page launched'))
 		.catch(e => console.error(`error launching new page: ${e}`))
-            
+
+	if (page) console.log('page launched')
+
 	// navigate to page and find video element
 	const vidEl = await findVideo(page, cam).catch(error => console.error(`Error finding video element: ${error}`))
         
