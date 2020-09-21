@@ -45,16 +45,8 @@ async function checkPlayButtons(page, play){
 }
 
 async function findVideo(page, cam){
-	const {url, id, play} = cam
+	const {id, play} = cam
 	console.log(`Preparing ${id} for screenshot`)
-
-	// setup page
-	await page.setDefaultTimeout(20000)
-	await page.setViewportSize({ width: 640, height: 480 })
-	page.on('crash', error => {throw new Error(`Page crashed: ${error}`)})
-
-	// navigate to page
-	await page.goto(url)
         
 	// if there are play buttons, click them
 	if (play) await checkPlayButtons(page, play).catch(error => console.error(`Error clicking play buttons: ${error}`))
@@ -163,41 +155,43 @@ async function makeZoo(cam){
 
 	// launch headless browser
 	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
-		.catch(e => console.error(`error launching browser: ${e}`))
 
 	if (browser) console.log('browser launched')
     
 	// launch browser context
 	const context = await browser.newContext()
-		.catch(e => console.error(`Error launching new context: ${e}`))
 
 	if (context) console.log('context launched')
 	
 	// launch a single page 
 	const page = await context.newPage()
-		.catch(e => console.error(`error launching new page: ${e}`))
 
-	if (page) console.log('page launched')
+	// setup page
+	await page.setDefaultTimeout(20000)
+	await page.setViewportSize({ width: 640, height: 480 })
+	page.on('crash', error => {throw new Error(`Page crashed: ${error}`)})
+	page.on('pageerror', error => {throw new Error(`Page Error: ${error}`)})
+
+	// navigate to page
+	await page.goto(cam.url)
 
 	// navigate to page and find video element
-	const vidEl = await findVideo(page, cam).catch(error => console.error(`Error finding video element: ${error}`))
+	const vidEl = await findVideo(page, cam)
         
 	// take screenshots of video element
-	const {allScreenshots, videoDimensions} = await takeScreenshots(vidEl, cam.id).catch(error => `Error taking screenshots: '${error}`)
+	const {allScreenshots, videoDimensions} = await takeScreenshots(vidEl, cam.id)
         
 	// close browser 
-	await browser.close().catch(error => console.error(`Error closing browser: ${error}`))
+	await browser.close()
         
 	// setup gif encoder
-	const gif = await makeGIF(allScreenshots, videoDimensions, 'neuquant').catch(error => console.error(`Error setting up encoder: ${error}`))
+	const gif = await makeGIF(allScreenshots, videoDimensions, 'neuquant')
 
 	// send first screenshot to s3 for placeholder
 	await saveToS3(allScreenshots[0].ss, videoDimensions, cam.id, 'png')
-		.catch(err => console.error(`Issue saving image: ${err}`))
-        
+	
 	// send gif to s3
 	await saveToS3(gif, videoDimensions, cam.id, 'gif')
-		.catch(err => console.error(`Issue saving gif: ${err}`))
 
 	// return value to resolve
 	return `finished all the things for ${cam.id}`
