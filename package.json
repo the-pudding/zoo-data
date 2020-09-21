@@ -17,9 +17,7 @@
     "aws-sdk": "^2.755.0",
     "canvas": "^2.6.1",
     "d3-dsv": "^1.2.0",
-    "gif-encoder-2": "^1.0.5"
-  },
-  "devDependencies": {
+    "gif-encoder-2": "^1.0.5",
     "playwright-firefox": "^1.4.1"
   }
 }
