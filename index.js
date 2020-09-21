@@ -170,8 +170,14 @@ async function makeZoo(cam){
 		// setup page
 		await page.setDefaultTimeout(20000)
 		await page.setViewportSize({ width: 640, height: 480 })
-		page.on('crash', error => reject(error))
-		page.on('pageerror', error => reject(error))
+		page.on('crash', error => {
+			browser.close()
+			reject(error)
+		})
+		page.on('pageerror', error => {
+			browser.close()
+			reject(error)
+		})
 
 		// navigate to page
 		await page.goto(cam.url)
