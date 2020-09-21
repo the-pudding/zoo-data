@@ -65,7 +65,9 @@ async function findVideo(page, cam){
 	if (play) await page.waitForTimeout(20000)
 	else await page.waitForTimeout(2000)
 
-	return await page.$('video')
+	const video = await page.$('video')
+
+	return video
 }
 
 async function saveToS3(ss, videoDimensions, id, ext){
@@ -100,6 +102,7 @@ async function takeScreenshots(vidEl, id){
 	// loop through frames in sequence
 	for (const frame of frameRange){
 		const ss = await vidEl.screenshot({path: ''})
+			.catch(error => console.error(`Error taking screenshots: ${error}`))
 		const str = ss.toString('base64')
 
 		// save all screenshots locally
@@ -156,11 +159,13 @@ async function makeGIF(allScreenshots, videoDimensions, algorithm){
 }
 
 async function makeZoo(cam){
+	console.log(`Getting started with ${cam.id}`)
+	
 	// launch headless browser
 	const browser = await firefox.launch({headless: true,  timeout: 5000, args: ['--no-sandbox']}).catch(e => console.error(`error launching browser: ${e}`))
     
 	// launch a single page 
-	const page = await browser.newPage({_recordVideos: true}).catch(e => console.error(`error launching new page: ${e}`))
+	const page = await browser.newPage().catch(e => console.error(`error launching new page: ${e}`))
             
 	// navigate to page and find video element
 	const vidEl = await findVideo(page, cam).catch(error => console.error(`Error finding video element: ${error}`))
