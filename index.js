@@ -53,11 +53,17 @@ async function findVideo(page, cam){
 
 	// get video element playing
 	await page.waitForTimeout(4000)
-	await page.$$('video', el => el.play())
-	if (play) await page.waitForTimeout(20000)
-	else await page.waitForTimeout(2000)
 
-	const video = await page.$('video')
+	const video = await page.waitForSelector('video')
+
+	await page.$$eval('video', el => el.forEach(e => e.play()))
+	if (play) await page.waitForTimeout(20000)
+
+	// attempting to skip ad on these videos
+	if (cam.id === 79 || cam.id === 139) await page.waitForTimeout(45000)
+	else await page.waitForTimeout(5000)
+
+	// const video = await page.$('video')
 
 	return video
 }
@@ -229,15 +235,15 @@ async function makeZoo(cam, browser){
 
 
 (async function loopThroughCams(){
-	const sa = [7, 20, 21, 22, 23, 24, 27]
-	const sub = webcams// .slice(0, 30)// .filter(d => sa.includes(+d.id))
+	const sa = [139]
+	const sub = webcams.filter(d => sa.includes(+d.id))
 	// launch headless browser
-	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
+	const browser = await firefox.launch({headless: false,  timeout: 20000, args: ['--no-sandbox']})
     
 	for (const [index, cam] of sub.entries()){
 		const output = await makeZoo(cam, browser).catch(error => console.error(`Error getting zoos: ${error}`))
 		console.log({output})
-		if (index === webcams.length - 1) await browser.close()
+		if (index === sub.length - 1) await browser.close()
 	}
 
 	console.log('for loop finished!')

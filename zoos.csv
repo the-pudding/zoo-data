@@ -17,16 +17,14 @@ id,facility,animal,url,play
 16,San Diego Zoo,burrowing owl,https://zssd-owlaviary.player.camzonecdn.com/v1.5/CamzoneStreamPlayer?channel=zssd-owlaviary&iframe=yes,
 17,San Diego Zoo,koala,https://zssd-koala.secureplayer.camzonecdn.com/v1.3/CamzoneStreamPlayer?iframe=yes&channel=zssd-koala&muted=yes,
 18,San Diego Zoo,condor,https://zssd-condorhd.player.camzonecdn.com/v1.5/CamzoneStreamPlayer?channel=zssd-condorhd&iframe=yes,
-19,National Zoo,black-footed ferret,https://nationalzoo.si.edu/webcams/black-footed-ferret-cam,"button.close, #bffcam-OverlayPlayIcon"
 20,National Zoo,cheetah,https://nationalzoo.si.edu/webcams/cheetah-cub-cam,"button.close, #cheetahcam1-OverlayPlayIcon"
 21,National Zoo,naked mole-rat,https://nationalzoo.si.edu/webcams/naked-mole-rat-cam,"button.close, #nmrcam1-OverlayPlayIcon"
 22,National Zoo,lion,https://nationalzoo.si.edu/webcams/lion-cam,"button.close, #lioncam-OverlayPlayIcon"
 23,National Zoo,giant panda,https://nationalzoo.si.edu/webcams/panda-cam,"button.close, #pandacam1-OverlayPlayIcon"
 24,National Zoo,Asian elephant,https://nationalzoo.si.edu/webcams/elephants,"button.close, #elephantcam-OverlayPlayIcon"
-27,Monterey Bay Aquarium,coral reef,https://www.montereybayaquarium.org/animals/live-cams/coral-reef-cam,.adage-video-btn-play
 28,Monterey Bay Aquarium,sea nettles,https://www.youtube.com/embed/28cnxCbix0k?rel=0&enablejsapi=1&playsinline=0&autoplay=1,
-29,Monterey Bay Aquarium,kelp forest,https://www.youtube.com/embed/28cnxCbix0k?rel=0&enablejsapi=1&playsinline=0&autoplay=1,
-30,Monterey Bay Aquarium,moon jellyfish,http://www.ustream.tv/embed/9948292?html5ui=1&showtitle=false&forced-quality=high&autoplay=1,
+29,Monterey Bay Aquarium,kelp forest,http://www.ustream.tv/embed/9948292?html5ui=1&showtitle=false&forced-quality=high&autoplay=1,
+30,Monterey Bay Aquarium,moon jellyfish,https://www.youtube.com/embed/4s1iaXflVcg?rel=0&enablejsapi=1&playsinline=0&autoplay=1,
 31,Monterey Bay Aquarium,open sea,http://www.ustream.tv/embed/9600798?html5ui=1&showtitle=false&forced-quality=high&autoplay=1,
 33,Monterey Bay Aquarium,sea otter,https://www.ustream.tv/embed/13659436?html5ui=1&showtitle=false&forced-quality=high&autoplay=1,
 34,Monterey Bay Aquarium,shark & fish,https://www.youtube.com/embed/wNcwiMcbiWg?rel=0&enablejsapi=1&playsinline=0&autoplay=1,
@@ -47,7 +45,7 @@ id,facility,animal,url,play
 49,Lone Pine Koala Sanctuary,skinks & bearded dragons,https://www.youtube.com/embed/0XeZXSdW7H4?rel=0&autoplay=1,
 50,Lone Pine Koala Sanctuary,perentie,https://www.youtube.com/embed/aL-S8etEZlE?rel=0&autoplay=1,
 51,Lone Pine Koala Sanctuary,platypus,https://www.youtube.com/embed/pLzyyQMKyoY?rel=0&autoplay=1,
-53,Zoo Atlanta,giant panda,https://www.youtube.com/embed/bJGrLNCg0pM?rel=0&autoplay=1,
+53,Zoo Atlanta,giant panda,https://www.youtube.com/embed/Zb0w0MqFFYs?rel=0&autoplay=1,
 54,Houston Zoo,giraffe,https://relay.ozolio.com/pub.api?cmd=iframe&oid=CID_IYVU0000014B,
 55,Houston Zoo,western lowland gorilla,https://relay.ozolio.com/pub.api?cmd=iframe&oid=CID_EDQF00000245,
 56,Houston Zoo,Asian elephant,https://relay.ozolio.com/pub.api?cmd=iframe&oid=CID_ERHC00000141,
@@ -73,7 +71,6 @@ id,facility,animal,url,play
 80,Melbourne Zoo,"fiordland penguins, little penguins",https://www.youtube.com/embed/3CAU9Ex_GKk?rel=0&autoplay=1,
 81,Melbourne Zoo,giraffe,https://www.youtube.com/embed/hNexlUkTTuc?rel=0&autoplay=1,
 82,Healesville Sanctuary,koala,https://www.youtube.com/embed/OHbk7Ghz-5E?rel=0&autoplay=1,
-83,Melbourne Zoo,zebra,https://www.youtube.com/embed/C0wKbSPi_6Y?rel=0&autoplay=1,
 84,Melbourne Zoo,snow leopards,https://www.youtube.com/embed/4wb6o3QvrxY?rel=0&autoplay=1,
 85,Werribee Open Range Zoo,lion,https://www.youtube.com/embed/gTz_7tKUfYM?rel=0&autoplay=1,
 86,Memphis Zoo,hippo,https://relay.ozolio.com/pub.api?cmd=iframe&oid=CID_UXQF00000917,
@@ -95,8 +92,5 @@ id,facility,animal,url,play
 114,Cheyenne Mountain Zoo,giraffe,https://www.youtube.com/embedXtRdw-YK2i8?autoplay=1,
 123,Greenville Zoo,giraffe,https://public.earthcam.net/tJ90CoLmq7TzrY396Yd88EcZCvjINnq0l56Ndt3BgZM!.tJ90CoLmq7TzrY396Yd88Owz3clOgztAIKv3BW9nKyA!.tJ90CoLmq7TzrY396Yd88Jv0uyg2nfZkWPNAt6hpfXQ!/giraffe_project/giraffe_barn/live,
 124,Highland Wildlife Park,snow monkey,https://content.jwplatform.com/previews/gnCCEINK-7ldQbxkB,
-139,Vancouver Aquarium,sea otter,https://relay.ozolio.com/pub.api?cmd=iframe&oid=CID_RNDJ00000511,
+139,Vancouver Aquarium,sea otter,https://www.youtube.com/embed/OjqyQr1Fa4g?autoplay=1,
 140,Zoo Montana,grizzly bear,https://public.earthcam.net/tJ90CoLmq7TzrY396Yd88LfUbRRthpUAS8O8784T_Q0!.tJ90CoLmq7TzrY396Yd88Pwo2Fu2e9s59LPSSHzv2TY!.tJ90CoLmq7TzrY396Yd88EUQCXkTyac_F5FEdW1tAQQ!/zoo_montana_cam/montana_bear_cam/live,
-141,Oakland Zoo,grizzly bear,https://relay.ozolio.com/pub.api?cmd=iframe&oid=CID_JSVB00000BA1,
-142,Oakland Zoo,African elephant,https://relay.ozolio.com/pub.api?cmd=iframe&oid=CID_YCUT00000B6A,
-143,Oakland Zoo,sun bear,https://relay.ozolio.com/pub.api?cmd=iframe&oid=CID_ATDG00000B29,
