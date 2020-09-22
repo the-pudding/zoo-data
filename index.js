@@ -160,14 +160,9 @@ async function makeZoo(cam, browser){
 
 	try {
 		console.log(`Getting started with ${cam.id}`)
-
-
-		if (browser) console.log('browser launched')
     
 		// launch browser context
 		 context = await browser.newContext({viewport: {width: 640, height: 480}})
-
-		if (context) console.log('context launched')
 	
 		// launch a single page 
 		const page = await context.newPage()
