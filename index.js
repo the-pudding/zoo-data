@@ -104,21 +104,36 @@ async function takeScreenshots(vidEl, id){
 	return {allScreenshots, videoDimensions}
 }
 
-async function processImage(file, ctx, encoder, dimensions){
+async function processImage(file, ctx, encoder, dimensions, index, canvas){
 	const image = new Image()
 	const {canvasWidth, canvasHeight, width, height} = dimensions
 
-	const x = width > canvasWidth ? (canvasWidth - width) / 2 : 0
-	const y = height > canvasHeight ? (canvasHeight - height) / 2 : 0
+	const imgRatio = height/width
+	const canvasRatio = canvasHeight/canvasWidth
+
+	// const x = width > canvasWidth ? (canvasWidth - width) / 2 : 0
+	// const y = height > canvasHeight ? (canvasHeight - height) / 2 : 0
+
+	let imgStr = null
 
 	image.onload = () => {
-		ctx.drawImage(image, x, y)
+		if (imgRatio > canvasRatio) ctx.drawImage(image, 0, (canvasHeight - height) / 2, width, height)
+		else ctx.drawImage(image, (canvasWidth - width) / 2, 0, width, canvasHeight)
+		// ctx.drawImage(image, x, y)
 		ctx.getImageData(0, 0, canvasWidth, canvasHeight)
+		
+		// if on the first frame, save the new image data
+		if (index === 0){
+			const dataURL = canvas.toBuffer('image/png')
+			 imgStr = dataURL
+		}
 
 		encoder.addFrame(ctx)
 	}
 
 	image.src = `data:image/png;base64,${file.str}`
+
+	return imgStr
 }
 
 async function makeGIF(allScreenshots, videoDimensions, algorithm){
@@ -138,16 +153,21 @@ async function makeGIF(allScreenshots, videoDimensions, algorithm){
 	encoder.start()
 	encoder.setDelay(200)
 
+	let firstStr = null
+
 	// process images in sequence
-	for (const file of allScreenshots){
-		await processImage(file, ctx, encoder, dimensions).catch(error => console.error(`Error processing images for gif: ${error}`))
+	for (const [index, file] of allScreenshots.entries()){
+		if (index === 0){
+			firstStr = await processImage(file, ctx, encoder, dimensions, index, canvas).catch(error => console.error(`Error processing images for gif: ${error}`))
+		}
+		await processImage(file, ctx, encoder, dimensions, index, canvas).catch(error => console.error(`Error processing images for gif: ${error}`))
 	}
 	
 	// finish encoder
 	encoder.finish()
 	const buffer = encoder.out.getData()
 
-	return buffer
+	return {gif: buffer, firstImg: firstStr}
 }
 
 async function handleError(error, browser, message){
@@ -190,10 +210,10 @@ async function makeZoo(cam, browser){
 		await context.close()
         
 		// setup gif encoder
-		const gif = await makeGIF(allScreenshots, videoDimensions, 'neuquant')
+		const {gif, firstImg} = await makeGIF(allScreenshots, videoDimensions, 'neuquant')
 
 		// send first screenshot to s3 for placeholder
-		await saveToS3(allScreenshots[0].ss, videoDimensions, cam.id, 'png')
+		await saveToS3(firstImg, videoDimensions, cam.id, 'png')
 	
 		// send gif to s3
 		await saveToS3(gif, videoDimensions, cam.id, 'gif')
@@ -203,8 +223,8 @@ async function makeZoo(cam, browser){
 	} catch(error){
 		await context.close()
 		console.error(`Error making zoos: ${error}`)
+		return `oops, ${cam.id} failed`
 	}
-	return 'all done'
 }
 
 
