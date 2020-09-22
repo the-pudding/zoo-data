@@ -156,64 +156,63 @@ async function handleError(error, browser, message){
 }
 
 async function makeZoo(cam){
-	console.log(`Getting started with ${cam.id}`)
+	let browser = null
+	try {
+		console.log(`Getting started with ${cam.id}`)
 
-	// launch headless browser
-	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
-		.catch(error => handleError(error, browser, 'Error launching browser'))
+		// launch headless browser
+		browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
 
-	if (browser) console.log('browser launched')
+		if (browser) console.log('browser launched')
     
-	// launch browser context
-	const context = await browser.newContext()
-		.catch(error => handleError(error, browser, 'Error launching context'))
+		// launch browser context
+		const context = await browser.newContext()
 
-	if (context) console.log('context launched')
+		if (context) console.log('context launched')
 	
-	// launch a single page 
-	const page = await context.newPage()
-		.catch(error => handleError(error, browser, 'Error launching page'))
+		// launch a single page 
+		const page = await context.newPage()
 
 		// setup page
-	await page.setDefaultTimeout(20000)
-		.catch(error => handleError(error, browser, 'Error setting timeout'))
+		await page.setDefaultTimeout(20000)
 
-	await page.setViewportSize({ width: 640, height: 480 })
-		.catch(error => handleError(error, browser, 'Error setting viewport size'))
+		await page.setViewportSize({ width: 640, height: 480 })
 
-	page.on('crash', error => {
-		handleError(error, browser, 'Page crashed')
-	})
-	page.on('pageerror', error => {
-		handleError(error, browser, 'Page error')
-	})
+		page.on('crash', error => {
+			handleError(error, browser, 'Page crashed')
+		})
+		page.on('pageerror', error => {
+			handleError(error, browser, 'Page error')
+		})
 
-	// navigate to page
-	await page.goto(cam.url).catch(error => handleError(error, browser, 'Error navigating to page'))
+		// navigate to page
+		await page.goto(cam.url)
 
-	// navigate to page and find video element
-	const vidEl = await findVideo(page, cam).catch(error => handleError(error, browser, 'Error finding video'))
+		// navigate to page and find video element
+		const vidEl = await findVideo(page, cam)
         
-	// take screenshots of video element
-	const {allScreenshots, videoDimensions} = await takeScreenshots(vidEl, cam.id)
-		.catch(error => handleError(error, browser, 'Error taking screenshots'))
+		// take screenshots of video element
+		const {allScreenshots, videoDimensions} = await takeScreenshots(vidEl, cam.id)
         
 		// close browser 
-	await browser.close().catch(error => handleError(error, browser, 'Error closing browser'))
+		await browser.close()
         
-	// setup gif encoder
-	const gif = await makeGIF(allScreenshots, videoDimensions, 'neuquant').catch(error => handleError(error, browser, 'Error making gif'))
+		// setup gif encoder
+		const gif = await makeGIF(allScreenshots, videoDimensions, 'neuquant')
 
-	// send first screenshot to s3 for placeholder
-	await saveToS3(allScreenshots[0].ss, videoDimensions, cam.id, 'png').catch(error => handleError(error, browser, 'Error saving screenshot'))
+		// send first screenshot to s3 for placeholder
+		await saveToS3(allScreenshots[0].ss, videoDimensions, cam.id, 'png')
 	
-	// send gif to s3
-	await saveToS3(gif, videoDimensions, cam.id, 'gif').catch(error => handleError(error, browser, 'Error saving gif'))
+		// send gif to s3
+		await saveToS3(gif, videoDimensions, cam.id, 'gif')
 
-	// return value to resolve
-	return `finished all the things for ${cam.id}`
-
-	
+		// return value to resolve
+		return `finished all the things for ${cam.id}`
+	} catch(error){
+		await browser.close()
+		console.error(`Error making zoos: ${error}`)
+	}
+	return 'all done'
 }
 
 
@@ -222,7 +221,7 @@ async function makeZoo(cam){
 	const sub = webcams// .slice(0, 30)// .filter(d => sa.includes(+d.id))
     
 	for (const cam of sub){
-		const output = await makeZoo(cam).catch(error => console.error(`Error getting zoos: ${error}`))
+		const output = await makeZoo(cam)// .catch(error => {throw new Error(`Error getting zoos: ${error}`)})
 		console.log({output})
 	}
 
