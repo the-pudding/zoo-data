@@ -156,6 +156,7 @@ async function handleError(error, browser, message){
 }
 
 async function makeZoo(cam, browser){
+	let context = null
 
 	try {
 		console.log(`Getting started with ${cam.id}`)
@@ -164,7 +165,7 @@ async function makeZoo(cam, browser){
 		if (browser) console.log('browser launched')
     
 		// launch browser context
-		const context = await browser.newContext({viewport: {width: 640, height: 480}})
+		 context = await browser.newContext({viewport: {width: 640, height: 480}})
 
 		if (context) console.log('context launched')
 	
@@ -205,7 +206,7 @@ async function makeZoo(cam, browser){
 		// return value to resolve
 		return `finished all the things for ${cam.id}`
 	} catch(error){
-		await browser.close()
+		await context.close()
 		console.error(`Error making zoos: ${error}`)
 	}
 	return 'all done'
@@ -222,7 +223,7 @@ async function makeZoo(cam, browser){
 		const output = await makeZoo(cam, browser)// .catch(error => {throw new Error(`Error getting zoos: ${error}`)})
 		console.log({output})
 	}
-	
+
 	await browser.close()
 	console.log('for loop finished!')
 })().catch(error => console.error(`Error looping through cams: ${error}`))
