@@ -155,18 +155,16 @@ async function handleError(error, browser, message){
 	throw new Error(`${message}: ${error}`)
 }
 
-async function makeZoo(cam){
-	let browser = null
+async function makeZoo(cam, browser){
+
 	try {
 		console.log(`Getting started with ${cam.id}`)
 
-		// launch headless browser
-		browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
 
 		if (browser) console.log('browser launched')
     
 		// launch browser context
-		const context = await browser.newContext()
+		const context = await browser.newContext({viewport: {width: 640, height: 480}})
 
 		if (context) console.log('context launched')
 	
@@ -175,8 +173,6 @@ async function makeZoo(cam){
 
 		// setup page
 		await page.setDefaultTimeout(20000)
-
-		await page.setViewportSize({ width: 640, height: 480 })
 
 		page.on('crash', error => {
 			handleError(error, browser, 'Page crashed')
@@ -195,7 +191,7 @@ async function makeZoo(cam){
 		const {allScreenshots, videoDimensions} = await takeScreenshots(vidEl, cam.id)
         
 		// close browser 
-		await browser.close()
+		await context.close()
         
 		// setup gif encoder
 		const gif = await makeGIF(allScreenshots, videoDimensions, 'neuquant')
@@ -219,11 +215,14 @@ async function makeZoo(cam){
 (async function loopThroughCams(){
 	const sa = [7, 20, 21, 22, 23, 24, 27]
 	const sub = webcams// .slice(0, 30)// .filter(d => sa.includes(+d.id))
+	// launch headless browser
+	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
     
 	for (const cam of sub){
-		const output = await makeZoo(cam)// .catch(error => {throw new Error(`Error getting zoos: ${error}`)})
+		const output = await makeZoo(cam, browser)// .catch(error => {throw new Error(`Error getting zoos: ${error}`)})
 		console.log({output})
 	}
-
+	
+	await browser.close()
 	console.log('for loop finished!')
 })().catch(error => console.error(`Error looping through cams: ${error}`))
