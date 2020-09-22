@@ -215,7 +215,7 @@ async function makeZoo(cam, browser){
 	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
     
 	for (const [index, cam] of sub.entries()){
-		const output = await makeZoo(cam, browser).catch(error => {throw new Error(`Error getting zoos: ${error}`)})
+		const output = await makeZoo(cam, browser).catch(error => console.error(`Error getting zoos: ${error}`))
 		console.log({output})
 		if (index === webcams.length - 1) await browser.close()
 	}
