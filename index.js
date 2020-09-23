@@ -2,7 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 
-// process.env.DEBUG='pw:browser'
+process.env.DEBUG='pw:api'
 
 const { firefox } = require('playwright-firefox');
 const GIFEncoder = require('gif-encoder-2')
@@ -49,6 +49,8 @@ async function findVideo(page, cam){
 	console.log(`Preparing ${id} for screenshot`)
         
 	// if there are play buttons, click them
+	const nationalZoo = [20, 21, 22, 23, 24]
+	if (nationalZoo.includes(cam.id)) await page.waitForSelector('.popup')
 	if (play) await checkPlayButtons(page, play).catch(error => console.error(`Error clicking play buttons: ${error}`))
 
 	// get video element playing
@@ -235,7 +237,7 @@ async function makeZoo(cam, browser){
 
 
 (async function loopThroughCams(){
-	const sa = [139]
+	const sa = [20, 21, 22, 23, 24]
 	const sub = webcams.filter(d => sa.includes(+d.id))
 	// launch headless browser
 	const browser = await firefox.launch({headless: false,  timeout: 20000, args: ['--no-sandbox']})

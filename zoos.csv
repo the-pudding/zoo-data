@@ -17,7 +17,7 @@ id,facility,animal,url,play
 16,San Diego Zoo,burrowing owl,https://zssd-owlaviary.player.camzonecdn.com/v1.5/CamzoneStreamPlayer?channel=zssd-owlaviary&iframe=yes,
 17,San Diego Zoo,koala,https://zssd-koala.secureplayer.camzonecdn.com/v1.3/CamzoneStreamPlayer?iframe=yes&channel=zssd-koala&muted=yes,
 18,San Diego Zoo,condor,https://zssd-condorhd.player.camzonecdn.com/v1.5/CamzoneStreamPlayer?channel=zssd-condorhd&iframe=yes,
-20,National Zoo,cheetah,https://nationalzoo.si.edu/webcams/cheetah-cub-cam,"button.close, #cheetahcam1-OverlayPlayIcon"
+20,National Zoo,cheetah,https://nationalzoo.si.edu/webcams/cheetah-cub-cam,"section.footerwrap, .cheetahcam1-Play"
 21,National Zoo,naked mole-rat,https://nationalzoo.si.edu/webcams/naked-mole-rat-cam,"button.close, #nmrcam1-OverlayPlayIcon"
 22,National Zoo,lion,https://nationalzoo.si.edu/webcams/lion-cam,"button.close, #lioncam-OverlayPlayIcon"
 23,National Zoo,giant panda,https://nationalzoo.si.edu/webcams/panda-cam,"button.close, #pandacam1-OverlayPlayIcon"
