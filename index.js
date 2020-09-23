@@ -73,7 +73,8 @@ async function findVideo(page, cam){
 	if (play) await page.waitForTimeout(20000)
 
 	// attempting to skip ad on these videos
-	if (cam.id === 79 || cam.id === 139) await page.waitForTimeout(45000)
+	const nationalZoo = [20, 22, 23, 24]
+	if (cam.id === 79 || cam.id === 139 || nationalZoo.includes(+cam.id)) await page.waitForTimeout(45000)
 	else await page.waitForTimeout(5000)
 
 	// const video = await page.$('video')
@@ -239,8 +240,6 @@ async function makeZoo(cam, browser){
 			await dialog.dismiss()
 		})
 
-
-
 		// navigate to page and find video element
 		const vidEl = await findVideo(page, cam)
         
@@ -270,8 +269,8 @@ async function makeZoo(cam, browser){
 
 
 (async function loopThroughCams(){
-	const sa = [21, 22, 23, 24]
-	const sub = webcams.filter(d => sa.includes(+d.id))
+	const sa = [20, 22, 23, 24]
+	const sub = webcams// .filter(d => sa.includes(+d.id))
 	// launch headless browser
 	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
     
