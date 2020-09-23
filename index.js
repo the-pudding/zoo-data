@@ -240,7 +240,7 @@ async function makeZoo(cam, browser){
 	const sa = [20, 21, 22, 23, 24]
 	const sub = webcams.filter(d => sa.includes(+d.id))
 	// launch headless browser
-	const browser = await firefox.launch({headless: false,  timeout: 20000, args: ['--no-sandbox']})
+	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
     
 	for (const [index, cam] of sub.entries()){
 		const output = await makeZoo(cam, browser).catch(error => console.error(`Error getting zoos: ${error}`))
