@@ -17,11 +17,11 @@ id,facility,animal,url,play
 16,San Diego Zoo,burrowing owl,https://zssd-owlaviary.player.camzonecdn.com/v1.5/CamzoneStreamPlayer?channel=zssd-owlaviary&iframe=yes,
 17,San Diego Zoo,koala,https://zssd-koala.secureplayer.camzonecdn.com/v1.3/CamzoneStreamPlayer?iframe=yes&channel=zssd-koala&muted=yes,
 18,San Diego Zoo,condor,https://zssd-condorhd.player.camzonecdn.com/v1.5/CamzoneStreamPlayer?channel=zssd-condorhd&iframe=yes,
-20,National Zoo,cheetah,https://nationalzoo.si.edu/webcams/cheetah-cub-cam,"section.footerwrap, .cheetahcam1-Play"
-21,National Zoo,naked mole-rat,https://nationalzoo.si.edu/webcams/naked-mole-rat-cam,"button.close, #nmrcam1-OverlayPlayIcon"
-22,National Zoo,lion,https://nationalzoo.si.edu/webcams/lion-cam,"button.close, #lioncam-OverlayPlayIcon"
-23,National Zoo,giant panda,https://nationalzoo.si.edu/webcams/panda-cam,"button.close, #pandacam1-OverlayPlayIcon"
-24,National Zoo,Asian elephant,https://nationalzoo.si.edu/webcams/elephants,"button.close, #elephantcam-OverlayPlayIcon"
+20,National Zoo,cheetah,https://nationalzoo.si.edu/webcams/cheetah-cub-cam,#cheetahcam1-OverlayPlayIcon
+21,National Zoo,naked mole-rat,https://nationalzoo.si.edu/webcams/naked-mole-rat-cam,#nmrcam1-OverlayPlayIcon
+22,National Zoo,lion,https://nationalzoo.si.edu/webcams/lion-cam,.vjs-big-play-button
+23,National Zoo,giant panda,https://nationalzoo.si.edu/webcams/panda-cam,#pandacam1-OverlayPlayIcon
+24,National Zoo,Asian elephant,https://nationalzoo.si.edu/webcams/elephants,#elephantcam-OverlayPlayIcon
 28,Monterey Bay Aquarium,sea nettles,https://www.youtube.com/embed/28cnxCbix0k?rel=0&enablejsapi=1&playsinline=0&autoplay=1,
 29,Monterey Bay Aquarium,kelp forest,http://www.ustream.tv/embed/9948292?html5ui=1&showtitle=false&forced-quality=high&autoplay=1,
 30,Monterey Bay Aquarium,moon jellyfish,https://www.youtube.com/embed/4s1iaXflVcg?rel=0&enablejsapi=1&playsinline=0&autoplay=1,

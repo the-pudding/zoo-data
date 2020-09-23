@@ -48,9 +48,20 @@ async function findVideo(page, cam){
 	const {id, play} = cam
 	console.log(`Preparing ${id} for screenshot`)
         
-	// if there are play buttons, click them
-	const nationalZoo = [20, 21, 22, 23, 24]
-	if (nationalZoo.includes(cam.id)) await page.waitForSelector('.popup')
+	// // if there are play buttons, click them
+	// const nationalZoo = [20, 21, 22, 23, 24]
+	// if (nationalZoo.includes(+cam.id)){
+	
+	// 	const dialog = await page.waitForSelector('#Modal-80')
+	// 	await page.evaluate((d) => {
+	// 		console.log({d})
+	// 	})
+	// 	await page.click('section.footerwrap')
+	// }
+
+		
+	// 	if (popup) await page.click('div.popup')
+	// }
 	if (play) await checkPlayButtons(page, play).catch(error => console.error(`Error clicking play buttons: ${error}`))
 
 	// get video element playing
@@ -183,6 +194,17 @@ async function handleError(error, browser, message){
 	throw new Error(`${message}: ${error}`)
 }
 
+async function setupNationalZoo(context, cam){
+	console.log('adding cookies')
+	await context.addCookies([{
+		'name': 'Modal-80',
+		'value': 'true',
+		'url': `${cam.url}`
+	}
+	])
+		
+}
+
 async function makeZoo(cam, browser){
 	let context = null
 
@@ -191,22 +213,33 @@ async function makeZoo(cam, browser){
     
 		// launch browser context
 		 context = await browser.newContext({viewport: {width: 640, height: 480}})
-	
+		 
+		// handle special cookies for National Zoo cameras
+		const nationalZoo = [20, 21, 22, 23, 24]
+		if (nationalZoo.includes(+cam.id)) await setupNationalZoo(context, cam)
+
 		// launch a single page 
 		const page = await context.newPage()
 
 		// setup page
 		await page.setDefaultTimeout(20000)
 
+		// navigate to page
+		await page.goto(cam.url)
+
+		// setup page
 		page.on('crash', error => {
 			handleError(error, browser, 'Page crashed')
 		})
 		page.on('pageerror', error => {
 			handleError(error, browser, 'Page error')
 		})
+		page.on('dialog', async dialog => {
+			console.log({message: dialog.message()})
+			await dialog.dismiss()
+		})
 
-		// navigate to page
-		await page.goto(cam.url)
+
 
 		// navigate to page and find video element
 		const vidEl = await findVideo(page, cam)
@@ -237,10 +270,10 @@ async function makeZoo(cam, browser){
 
 
 (async function loopThroughCams(){
-	const sa = [20, 21, 22, 23, 24]
+	const sa = [21, 22, 23, 24]
 	const sub = webcams.filter(d => sa.includes(+d.id))
 	// launch headless browser
-	const browser = await firefox.launch({headless: false,  timeout: 20000, args: ['--no-sandbox']})
+	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
     
 	for (const [index, cam] of sub.entries()){
 		const output = await makeZoo(cam, browser).catch(error => console.error(`Error getting zoos: ${error}`))
