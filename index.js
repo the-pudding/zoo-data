@@ -13,6 +13,7 @@ const d3 = require('d3-dsv');
 
 const filePathImages = 'zoo-cams/stills'
 const filePathGIF = 'zoo-cams/output'
+const filePathData = 'zoo-cams'
 const frameCount = 15
 const frameRange = [...Array(frameCount).keys()]
 
@@ -44,24 +45,12 @@ async function checkPlayButtons(page, play){
 	}
 }
 
+
+
 async function findVideo(page, cam){
 	const {id, play} = cam
 	console.log(`Preparing ${id} for screenshot`)
         
-	// // if there are play buttons, click them
-	// const nationalZoo = [20, 21, 22, 23, 24]
-	// if (nationalZoo.includes(+cam.id)){
-	
-	// 	const dialog = await page.waitForSelector('#Modal-80')
-	// 	await page.evaluate((d) => {
-	// 		console.log({d})
-	// 	})
-	// 	await page.click('section.footerwrap')
-	// }
-
-		
-	// 	if (popup) await page.click('div.popup')
-	// }
 	if (play) await checkPlayButtons(page, play).catch(error => console.error(`Error clicking play buttons: ${error}`))
 
 	// get video element playing
@@ -267,17 +256,50 @@ async function makeZoo(cam, browser){
 	}
 }
 
+async function collectData(id){
+	const cam = {id, timestamp: null}
+	const timestamp = Date.now()
+	cam.timestamp = timestamp
+
+	const string = JSON.stringify(cam)
+
+	return string
+}
+
+async function writeData(data){
+	return new Promise(async (resolve, reject) => {
+		s3Bucket.upload({
+			Key: `${filePathData}/timestamps.json`,
+			Body: data
+		}, (err) => {
+			if (err) reject(err)
+			else {
+				console.log('Successfully uploaded timestamps.json')
+				resolve()
+			}
+		})
+	})
+}
 
 (async function loopThroughCams(){
-	const sa = [20, 22, 23, 24]
+	const sa = [0, 2, 90]
 	const sub = webcams// .filter(d => sa.includes(+d.id))
+
+	// setup for saving timestamp data
+	const data = []
 	// launch headless browser
 	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
     
 	for (const [index, cam] of sub.entries()){
-		const output = await makeZoo(cam, browser).catch(error => console.error(`Error getting zoos: ${error}`))
-		console.log({output})
-		if (index === sub.length - 1) await browser.close()
+		await makeZoo(cam, browser).catch(error => console.error(`Error getting zoos: ${error}`))
+		const str = await collectData(cam.id).catch(error => console.error(`Error collecting data: ${error}`))
+		data.push(str)
+
+		if (index === sub.length - 1) {
+			await browser.close()
+			const allStr = JSON.stringify(data)
+			await writeData(allStr).catch(error => console.error(`Error writing data: ${error}`))
+		}
 	}
 
 	console.log('for loop finished!')
