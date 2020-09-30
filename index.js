@@ -261,9 +261,7 @@ async function collectData(id){
 	const timestamp = Date.now()
 	cam.timestamp = timestamp
 
-	const string = JSON.stringify(cam)
-
-	return string
+	return cam
 }
 
 async function writeData(data){
