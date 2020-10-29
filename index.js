@@ -281,7 +281,7 @@ async function writeData(data){
 
 (async function loopThroughCams(){
 	const sa = [0, 2, 90]
-	const sub = webcams.filter(d => sa.includes(+d.id))
+	const sub = webcams// .filter(d => sa.includes(+d.id))
 
 	// setup for saving timestamp data
 	const data = []
