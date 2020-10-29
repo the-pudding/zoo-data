@@ -11,8 +11,8 @@ const fs = require('fs')
 const AWS = require('aws-sdk')
 const d3 = require('d3-dsv');
 
-const filePathImages = 'zoo-cams/stills'
-const filePathGIF = 'zoo-cams/output'
+const filePathImages = '2020/11/zoo-data/stills'
+const filePathGIF = '2020/11/zoo-data/output'
 const filePathData = 'zoo-cams'
 const frameCount = 15
 const frameRange = [...Array(frameCount).keys()]
@@ -281,7 +281,7 @@ async function writeData(data){
 
 (async function loopThroughCams(){
 	const sa = [0, 2, 90]
-	const sub = webcams// .filter(d => sa.includes(+d.id))
+	const sub = webcams.filter(d => sa.includes(+d.id))
 
 	// setup for saving timestamp data
 	const data = []
