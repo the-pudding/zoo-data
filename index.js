@@ -13,7 +13,7 @@ const d3 = require('d3-dsv');
 
 const filePathImages = '2020/11/zoo-data/stills'
 const filePathGIF = '2020/11/zoo-data/output'
-const filePathData = 'zoo-cams'
+const filePathData = '2020/11/zoo-data'
 const frameCount = 15
 const frameRange = [...Array(frameCount).keys()]
 
