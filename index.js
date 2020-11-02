@@ -246,9 +246,10 @@ async function makeZoo(cam, browser){
 	
 		// send gif to s3
 		await saveToS3(gif, videoDimensions, cam.id, 'gif')
+		
 
 		// return value to resolve
-		return `finished all the things for ${cam.id}`
+		return 'success'
 	} catch(error){
 		await context.close()
 		console.error(`Error making zoos: ${error}`)
@@ -281,7 +282,7 @@ async function writeData(data){
 
 (async function loopThroughCams(){
 	const sa = [0, 2, 90]
-	const sub = webcams// .filter(d => sa.includes(+d.id))
+	const sub = webcams.filter(d => sa.includes(+d.id))
 
 	// setup for saving timestamp data
 	const data = []
@@ -289,10 +290,13 @@ async function writeData(data){
 	const browser = await firefox.launch({headless: true,  timeout: 20000, args: ['--no-sandbox']})
     
 	for (const [index, cam] of sub.entries()){
-		await makeZoo(cam, browser).catch(error => console.error(`Error getting zoos: ${error}`))
-		const str = await collectData(cam.id).catch(error => console.error(`Error collecting data: ${error}`))
-		data.push(str)
-
+		const val = await makeZoo(cam, browser).catch(error => console.error(`Error getting zoos: ${error}`))
+		
+		if (val === 'success'){
+			const str = await collectData(cam.id).catch(error => console.error(`Error collecting data: ${error}`))
+			data.push(str)
+		}
+		
 		if (index === sub.length - 1) {
 			await browser.close()
 			const allStr = JSON.stringify(data)
